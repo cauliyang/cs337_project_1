@@ -9,11 +9,17 @@ classifiers = [
   # TODO
 ]
 license = { text = "MIT" }
-dependencies = ["typer"]
+dependencies = [
+    "ftfy>=6.3.1",
+    "langdetect>=1.0.9",
+    "pydantic>=2.11.9",
+    "spacy>=3.8.7",
+    "typer",
+]
 requires-python = ">= 3.10"
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
   "coverage", # testing
   "pytest",   # testing
   "ruff",     # linting
@@ -23,7 +29,6 @@ test = [
 
 [project.urls]
 bugs = "https://github.com/cauliyang/award/issues"
-changelog = "https://github.com/cauliyang/award/blob/master/changelog.md"
 homepage = "https://github.com/cauliyang/award"
 
 [project.scripts]

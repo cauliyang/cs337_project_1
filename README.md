@@ -17,6 +17,9 @@ git clone https://github.com/cauliyang/cs337_project_1.git
 # install uv
 pip install uv
 
+# install dependencies
+uv sync
+
 # run the program
 uv run award
 ```
