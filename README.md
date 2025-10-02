@@ -1,6 +1,12 @@
 # Award
 
-Extract awards from tweet. Developed for group 4 in CS337, Fall 2025.
+Extract awards from tweets. Developed for group 4 in CS337, Fall 2025.
+
+## Members
+
+[Logan Mappers]()
+[Katie Shao]()
+[Yangyang Li](https://github.com/cauliyang/cs337_project_1.git)
 
 ## How to use
 
