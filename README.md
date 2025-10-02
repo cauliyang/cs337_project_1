@@ -1,18 +1,20 @@
 # Award
 
-![PyPI version](https://img.shields.io/pypi/v/award.svg)
-[![Documentation Status](https://readthedocs.org/projects/award/badge/?version=latest)](https://award.readthedocs.io/en/latest/?version=latest)
+Extract awards from tweet. Developed for group 4 in CS337, Fall 2025.
 
-extract award from tweet
+## How to use
 
-* PyPI package: https://pypi.org/project/award/
-* Free software: MIT License
-* Documentation: https://award.readthedocs.io.
+```sh
+# clone the repo
+git clone https://github.com/cauliyang/cs337_project_1.git
 
-## Features
+# install uv
+pip install uv
 
-* TODO
+# run the program
+uv run award
+```
+
+- Free software: MIT License
 
 ## Credits
-
-This package was created with [Cookiecutter](https://github.com/audreyfeldroy/cookiecutter) and the [audreyfeldroy/cookiecutter-pypackage](https://github.com/audreyfeldroy/cookiecutter-pypackage) project template.
