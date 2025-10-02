@@ -5,15 +5,16 @@ from rich.console import Console
 
 from award import utils
 
-app = typer.Typer()
+app = typer.Typer(
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 console = Console()
 
 
 @app.command()
 def main():
     """Console script for award."""
-    console.print("Replace this message by putting your code into award.cli.main")
-    console.print("See Typer documentation at https://typer.tiangolo.com/")
+    console.print("Let us start here!")
     utils.do_something_useful()
 
 

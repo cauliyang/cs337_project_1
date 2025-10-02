@@ -3,18 +3,17 @@ name = "award"
 version = "0.1.0"
 description = "extract awards from tweet"
 readme = "README.md"
-authors = [{ name = "Group 4", email = "yangyang.li@northwestern.edu" }]
-maintainers = [{ name = "Group 4", email = "yangyang.li@northwestern.edu" }]
+authors = [{ name = "Group 4" }]
 classifiers = [
   # TODO
 ]
 license = { text = "MIT" }
 dependencies = [
-    "ftfy>=6.3.1",
-    "langdetect>=1.0.9",
-    "pydantic>=2.11.9",
-    "spacy>=3.8.7",
-    "typer",
+  "ftfy>=6.3.1",
+  "langdetect>=1.0.9",
+  "pydantic>=2.11.9",
+  "spacy>=3.8.7",
+  "typer",
 ]
 requires-python = ">= 3.10"
 
