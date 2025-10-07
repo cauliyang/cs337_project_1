@@ -20,9 +20,13 @@ pip install uv
 # install dependencies
 uv sync
 
-# run the program
-uv run award
+# run the autograder
+uv run autograder.py
 ```
+
+## Porject Description
+
+- <https://github.com/simon-benigeri/gg-project/blob/main/README.md>
 
 - Free software: MIT License
 

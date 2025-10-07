@@ -10,10 +10,13 @@ classifiers = [
 license = { text = "MIT" }
 dependencies = [
   "ftfy>=6.3.1",
+  "inflection>=0.5.1",
   "langdetect>=1.0.9",
+  "nltk>=3.9.2",
   "pydantic>=2.11.9",
   "spacy>=3.8.7",
   "typer",
+  "unidecode>=1.4.0",
 ]
 requires-python = ">= 3.10"
 
@@ -27,11 +30,10 @@ dev = [
 ]
 
 [project.urls]
-bugs = "https://github.com/cauliyang/award/issues"
-homepage = "https://github.com/cauliyang/award"
+bugs = "https://github.com/cauliyang/cs337_project_1/issues"
+homepage = "https://github.com/cauliyang/cs337_project_1"
 
 [project.scripts]
-award = "award.cli:app"
 
 [tool.ty]
 # All rules are enabled as "error" by default; no need to specify unless overriding.
