@@ -3,11 +3,11 @@ Version 0.7
 Python 3
 """
 
-import sys
-import json
 import difflib
-from pprint import pprint
+import json
+import sys
 from collections import Counter
+from pprint import pprint
 
 from nltk.metrics import edit_distance
 
@@ -88,7 +88,7 @@ def calc_translation(result, answer):
 
     intersection = result.intersection(answer)
     translation = {resultmap[i]: answermap[i] for i in intersection}
-    scores = dict(list(zip(list(translation.values()), [1] * len(intersection))))
+    scores = dict(list(zip(list(translation.values()), [1] * len(intersection), strict=False)))
     score_by_results = {}
     score_by_answers = {}
 
@@ -187,7 +187,7 @@ def score_structured(year, answers, info_type):
     # c_score is the completeness score
     spelling_score = 0
     c_score = 0
-    results = getattr(gg_api, "get_%s" % info_type)(year)
+    results = getattr(gg_api, f"get_{info_type}")(year)
     length = 26
 
     if info_type == "nominees":
@@ -216,7 +216,7 @@ def score_structured(year, answers, info_type):
 
 
 def score_unstructured(year, answers, info_type):
-    results = getattr(gg_api, "get_%s" % info_type)(year)
+    results = getattr(gg_api, f"get_{info_type}")(year)
     spelling_score, translation = calc_translation(results, answers[info_type])
     c_score = calc_score([translation[res] if res in translation else res for res in results], answers[info_type])
 
@@ -229,7 +229,7 @@ def main(grading):
 
     scores = {y: {g: {t: 0 for t in types} for g in grading} for y in years}
     for y in years:
-        with open("gg%sanswers.json" % y, "r") as f:
+        with open(f"gg{y}answers.json") as f:
             answers = json.load(f)
 
         answers["awards"] = list(answers["award_data"].keys())

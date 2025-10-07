@@ -1,22 +1,22 @@
 #!/usr/bin/env python
+import pydantic
 import pytest
 
-"""Tests for `award` package."""
-
-# from award import award
+from award import tweet
 
 
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
+def test_tweet():
+    test_tweet = tweet.Tweet(
+        raw_txt="This is a test tweet",
+        clean_txt="This is a test tweet",
+        person="leon",
+        hash_tags=["test"],
+        retweet_count=0,
+    )
 
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyfeldroy/cookiecutter-pypackage')
+    assert test_tweet.raw_txt == "This is a test tweet"
 
 
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
+def test_award_fail():
+    with pytest.raises(pydantic.ValidationError):
+        tweet.Award(name="test award", host=["Tweet"], nominees=["Tweet 1", "Tweet 2", "Tweet 3"], winner="Tweet 4")
