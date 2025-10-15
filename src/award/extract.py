@@ -1,10 +1,17 @@
 import json
 import zipfile
+from abc import ABC, abstractmethod
 from collections.abc import Generator
 from pathlib import Path
 
 from award.filter import BaseFilter
 from award.tweet import Tweet
+
+
+class BaseCleaner(ABC):
+    @abstractmethod
+    def clean(self, tweet: str) -> str:
+        pass
 
 
 class Extractor:

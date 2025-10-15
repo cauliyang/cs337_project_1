@@ -1,12 +1,5 @@
-from abc import ABC, abstractmethod
 
 from pydantic import BaseModel, Field, model_validator
-
-
-class BaseCleaner(ABC):
-    @abstractmethod
-    def clean(self, tweet: str) -> str:
-        pass
 
 
 class User(BaseModel):

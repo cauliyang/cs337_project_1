@@ -41,6 +41,9 @@ homepage = "https://github.com/cauliyang/cs337_project_1"
 # Example override: relax a rule for the entire project (uncomment if needed).
 # rules.TY015 = "warn"  # For invalid-argument-type, warn instead of error.
 
+[tool.ty.src]
+exclude = ["src/award/gg_api.py"]
+
 [tool.ruff]
 line-length = 120
 
@@ -53,6 +56,7 @@ select = [
   "B",  # flake8-bugbear
   "UP", # pyupgrade
 ]
+exclude = ["src/award/gg_api.py"]
 
 [tool.uv]
 package = true
