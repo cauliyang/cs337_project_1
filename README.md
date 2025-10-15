@@ -24,6 +24,18 @@ uv sync
 uv run autograder.py
 ```
 
+## Development
+
+```sh
+# run the tests
+uv run pytest -vls
+# or 
+make test
+
+# run the linter before pushing
+make lint
+```
+
 ## Porject Description
 
 - <https://github.com/simon-benigeri/gg-project/blob/main/README.md>
