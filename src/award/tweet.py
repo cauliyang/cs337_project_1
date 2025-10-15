@@ -62,6 +62,7 @@ class Tweet(BaseModel):
 class Award(BaseModel):
     name: str = Field(..., description="Name of the award category")
     host: list[str] = Field(..., description="List of hosts for the award ceremony")
+    presenters: list[str] = Field(..., description="List of presenters for the award")
     nominees: list[str] = Field(..., description="List of nominees for the award")
     winner: str = Field(..., description="Winner of the award")
 

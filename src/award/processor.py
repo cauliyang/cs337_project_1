@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from functools import singledispatchmethod
 from typing import Any
 
+from rich import print
+
 from .tweet import Tweet
 
 
@@ -150,6 +152,7 @@ class LoggingPipeline(ProcessorPipeline):
 
     def apply(self, data: str | Tweet) -> str | Tweet | None:
         result = data
+        print(f"\nApplying pipeline to {data}")
         for i, processor in enumerate(self.processors):
             print(f"Step {i}: {processor}")
 

@@ -1,4 +1,5 @@
 import json
+import random
 import zipfile
 
 from rich import print
@@ -21,7 +22,8 @@ def test_read_zip_json():
         file_name = z.namelist()[0]
         with z.open(file_name) as f:
             data = json.load(f)
-    print(data[:10])
+    data = random.sample(data, 10)
+    print(data)
 
 
 def test_extract_with_filters():
@@ -39,8 +41,7 @@ def test_extract_with_filters():
     extractor = Extractor("data/gg2013.json.zip", pipeline=pipeline)
 
     count = 0
-    for tweet in extractor.extract():
-        print(tweet)
+    for _tweet in extractor.extract():
         count += 1
         if count > 10:
             break
