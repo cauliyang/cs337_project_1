@@ -1,4 +1,4 @@
-from award.filter import UrlCleaner
+from award.processors import UrlCleaner
 from award.tweet import Tweet
 
 

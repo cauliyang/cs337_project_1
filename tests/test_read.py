@@ -5,7 +5,8 @@ import zipfile
 from rich import print
 
 from award.extract import Extractor
-from award.filter import (
+from award.processor import LoggingPipeline
+from award.processors import (
     EmptyTextFilter,
     FtfyCleaner,
     LanguageFilter,
@@ -14,7 +15,6 @@ from award.filter import (
     UnidecodeCleaner,
     UrlCleaner,
 )
-from award.processor import LoggingPipeline
 
 
 def test_read_zip_json():
