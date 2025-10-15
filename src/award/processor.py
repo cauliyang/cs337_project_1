@@ -5,6 +5,7 @@ from functools import singledispatchmethod
 from typing import Any
 
 from rich import print
+from langdetect import detect, LangDetectException
 
 from .tweet import Tweet
 
@@ -177,3 +178,21 @@ class LoggingPipeline(ProcessorPipeline):
 
         print(f"After: {result}")
         return result
+
+
+class LanguageFilter(BaseFilter):
+    """Filter tweets by detected language using langdetect."""
+
+    def __init__(self, allowed_languages: list[str] = ["en"]):
+        super().__init__(processor_type="filter")
+        self.allowed_languages = allowed_languages
+
+    def filter_tweet(self, tweet: Tweet) -> bool:
+        text = getattr(tweet, "text", "").strip()
+        if not text:
+            return False
+        try:
+            detected = detect(text)
+            return detected in self.allowed_languages
+        except LangDetectException:
+            return False
