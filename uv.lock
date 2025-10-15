@@ -44,6 +44,7 @@ dev = [
     { name = "coverage" },
     { name = "ipdb" },
     { name = "pytest" },
+    { name = "rich" },
     { name = "ruff" },
     { name = "ty" },
 ]
@@ -65,6 +66,7 @@ dev = [
     { name = "coverage" },
     { name = "ipdb" },
     { name = "pytest" },
+    { name = "rich", specifier = ">=14.1.0" },
     { name = "ruff" },
     { name = "ty" },
 ]
