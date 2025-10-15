@@ -19,6 +19,7 @@ def test_hashtag_transformer():
     print(tweet)
     assert tweet.hash_tags == ["#example", "#example2"]
 
+
 def test_tag_username_transformer():
     tag_username_transformer = TagUsernameTransformer()
     tweet = Tweet.from_dict(

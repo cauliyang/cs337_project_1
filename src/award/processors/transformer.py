@@ -59,21 +59,13 @@ class TagUsernameTransformer(BaseProcessor):
 
         def username_repl(m):
             username = m.group()[1:]  # Remove '@'
-            username_human = (
-                humanize(username)
-                if "_" in username
-                else humanize(underscore(username))
-            )
+            username_human = humanize(username) if "_" in username else humanize(underscore(username))
 
             return f"{username_human}"
 
         def hashtag_repl(m):
             hashtag = m.group()[1:]  # Remove '#'
-            hashtag_human = (
-                humanize(hashtag)
-                if "_" in hashtag
-                else humanize(underscore(hashtag))
-            )
+            hashtag_human = humanize(hashtag) if "_" in hashtag else humanize(underscore(hashtag))
             return f"{hashtag_human}"
 
         # Use sub only if patterns are present for efficiency
