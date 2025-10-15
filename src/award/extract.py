@@ -1,17 +1,10 @@
 import json
 import zipfile
-from abc import ABC, abstractmethod
 from collections.abc import Generator
 from pathlib import Path
 
 from award.filter import BaseFilter, EmptyTextFilter
 from award.tweet import Tweet
-
-
-class BaseCleaner(ABC):
-    @abstractmethod
-    def clean(self, tweet: str) -> str:
-        pass
 
 
 class Extractor:
@@ -23,7 +16,7 @@ class Extractor:
     ):
         self.json_file = json_file
         self.text_filters = text_filters if text_filters else [EmptyTextFilter()]
-        self.tweet_filters = tweet_filters if tweet_filters else [EmptyTextFilter()]
+        self.tweet_filters = tweet_filters if tweet_filters else []
 
     def extract(self) -> Generator[Tweet, None, None]:
         with zipfile.ZipFile(self.json_file) as z:

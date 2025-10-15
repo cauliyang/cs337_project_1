@@ -50,7 +50,6 @@ class BaseFilter:
             f"Use Tweet objects or override filter_text()."
         )
 
-
 class EmptyTextFilter(BaseFilter):
     """Filter that always returns True."""
 
@@ -68,9 +67,12 @@ class LanguageFilter(BaseFilter):
         super().__init__(filter_type="language")
 
     def filter_text(self, text: str) -> bool:
-        """Check if text is in English. Returns False for invalid input."""
-        return langdetect.detect(text) == "en"
+        """Check if text is in English. Returns False for invalid input.
 
+        Raises:
+            langdetect.lang_detect_exception.LangDetectException: if language detection fails
+        """
+        return langdetect.detect(text) == "en"
 
 class RetweetFilter(BaseFilter):
     """Filter tweets based on retweet count. Only works with Tweet objects."""
