@@ -56,9 +56,14 @@ class Extractor:
         Yields:
             Tweet objects that pass all filters (after cleaning)
         """
-        with zipfile.ZipFile(self.json_file) as z:
-            file_name = z.namelist()[0]
-            with z.open(file_name) as f:
+        # check if the file is a zip file
+        if self.json_file.suffix == ".zip":
+            with zipfile.ZipFile(self.json_file) as z:
+                file_name = z.namelist()[0]
+                with z.open(file_name) as f:
+                    tweets_dict = json.load(f)
+        else:
+            with open(self.json_file) as f:
                 tweets_dict = json.load(f)
 
         for tweet_dict in tweets_dict:
