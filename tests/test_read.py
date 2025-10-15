@@ -1,14 +1,19 @@
-from award.processor import LoggingPipeline
-from award.filter import UrlCleaner
-from award.filter import SpaceCombinationCleaner
 import json
 import zipfile
 
 from rich import print
 
 from award.extract import Extractor
-from award.filter import EmptyTextFilter, FtfyCleaner, LanguageFilter, StripCleaner, UnidecodeCleaner
-from award.processor import ProcessorPipeline
+from award.filter import (
+    EmptyTextFilter,
+    FtfyCleaner,
+    LanguageFilter,
+    SpaceCombinationCleaner,
+    StripCleaner,
+    UnidecodeCleaner,
+    UrlCleaner,
+)
+from award.processor import LoggingPipeline
 
 
 def test_read_zip_json():
@@ -43,6 +48,3 @@ def test_extract_with_filters():
     # total_tweets = len(list(extractor.extract()))
     # print(f"Total tweets: {total_tweets}")
     # assert total_tweets > 0
-
-
-

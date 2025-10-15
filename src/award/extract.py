@@ -72,7 +72,7 @@ class Extractor:
                 if processed_tweet is not None:
                     yield processed_tweet
 
-            except Exception as e:
+            except Exception:
                 # Skip tweets that cause errors during processing
                 continue
 

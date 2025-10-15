@@ -9,6 +9,7 @@ from .tweet import Tweet
 
 # CLEANERS (str -> str transformations)
 
+
 class FtfyCleaner(BaseCleaner):
     """Clean text using ftfy to fix unicode issues."""
 
@@ -48,6 +49,7 @@ class StripCleaner(BaseCleaner):
     def clean(self, text: str) -> str:
         return text.strip()
 
+
 class UrlCleaner(BaseCleaner):
     """Clean URLs from text."""
 
@@ -56,6 +58,7 @@ class UrlCleaner(BaseCleaner):
 
     def clean(self, text: str) -> str:
         return re.sub(r"https?://\S+", "", text)
+
 
 class SpaceCombinationCleaner(BaseCleaner):
     """Clean space combinations from text."""
@@ -68,6 +71,7 @@ class SpaceCombinationCleaner(BaseCleaner):
 
 
 # FILTERS (returns bool for pass/fail)
+
 
 class EmptyTextFilter(BaseFilter):
     """Filter out empty or whitespace-only text."""

@@ -87,6 +87,7 @@ class BaseCleaner(BaseProcessor):
         """Allows using cleaner(data) or cleaner.process(data)."""
         return self.process(data)
 
+
 class ProcessorPipeline:
     """A composable pipeline of processors (filters and cleaners).
 
@@ -143,12 +144,32 @@ class ProcessorPipeline:
     def __repr__(self) -> str:
         return f"ProcessorPipeline({len(self.processors)} processors)"
 
+
 class LoggingPipeline(ProcessorPipeline):
-    def apply(self, data):
+    """Pipeline with detailed logging of each processing step."""
+
+    def apply(self, data: str | Tweet) -> str | Tweet | None:
+        result = data
         for i, processor in enumerate(self.processors):
             print(f"Step {i}: {processor}")
-            result = processor.process(data)
-            if result is None:
-                print(f"  → Filtered out by {processor}")
-                return None
+
+            if isinstance(processor, BaseFilter):
+                # Filters return bool - check the result
+                passed = processor.process(result)
+                print(f"  → Filter result: {passed}")
+                if not passed:
+                    print(f"  → Filtered out by {processor}")
+                    return None
+                # Keep the current result (don't replace with bool)
+            elif isinstance(processor, BaseCleaner):
+                # Cleaners transform the data
+                result = processor.process(result)
+                if isinstance(result, Tweet):
+                    print(f"  → Cleaned text: {result.text[:50]}...")
+                else:
+                    print(f"  → Cleaned text: {result[:50]}...")
+            else:
+                # Generic processor
+                result = processor.process(result)
+
         return result
