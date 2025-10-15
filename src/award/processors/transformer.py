@@ -4,7 +4,7 @@ from award.processor import BaseProcessor
 from award.tweet import Tweet
 
 
-class HashTagTransformer(BaseProcessor):
+class HashTagExtractionTransformer(BaseProcessor):
     """Transform the hashtags in the tweet.
 
     Extracts only hashtags appearing at the end of the tweet text and removes them from the text.

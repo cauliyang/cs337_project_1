@@ -14,6 +14,7 @@ from award.processors import (
     UnidecodeCleaner,
     UrlCleaner,
 )
+from award.processors.transformer import HashTagExtractionTransformer, TagUsernameTransformer
 
 
 def test_read_zip_json():
@@ -34,6 +35,8 @@ def test_extract_with_filters():
             UrlCleaner(),
             EmptyTextFilter(),
             LanguageFilter(language="en"),
+            HashTagExtractionTransformer(),  # extract and remove hashtags from text
+            TagUsernameTransformer(),  # transform hashtags and usernames to human-readable format
         ]
     )
     extractor = Extractor("data/gg2013.json.zip", pipeline=pipeline)

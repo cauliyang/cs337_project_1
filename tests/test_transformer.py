@@ -1,11 +1,11 @@
 from rich import print
 
-from award.processors import HashTagTransformer, TagUsernameTransformer
+from award.processors import HashTagExtractionTransformer, TagUsernameTransformer
 from award.tweet import Tweet
 
 
 def test_hashtag_transformer():
-    hashtag_transformer = HashTagTransformer(remove_hashtags=True)
+    hashtag_transformer = HashTagExtractionTransformer(remove_hashtags=True)
     tweet = Tweet.from_dict(
         {
             "text": "RT @user: This is a tweet with a hashtag #example #example2",

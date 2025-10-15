@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -19,10 +21,13 @@ class Tweet(BaseModel):
     id: int = Field(..., description="The ID of the tweet.")
     text: str = Field(..., description="The original, unprocessed text of the tweet.")
     user: User = Field(..., description="User information.")
-    timestamp_ms: int = Field(..., description="The timestamp (ms) of the tweet.")
-
+    timestamp_ms: int = Field(..., description="The timestamp (ms) of the tweet.", repr=False)
+    timestamp_human: str = Field(
+        default="",
+        description="Human-readable timestamp.",
+    )
     hash_tags: list[str] = Field(default_factory=list, description="List of hashtags included in the tweet.")
-    retweet_count: int = Field(
+    retweeted_count: int = Field(
         default=0, ge=0, description="Number of times this tweet has been retweeted (non-negative)."
     )
 
@@ -33,9 +38,22 @@ class Tweet(BaseModel):
         "str_strip_whitespace": True,  # Trim whitespace in all string fields
     }
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        dt = datetime.fromtimestamp(self.timestamp_ms / 1000)
+        self.timestamp_human = dt.strftime("%Y-%m-%d %H:%M:%S")
+
     def has_tag(self, tag: str) -> bool:
         """Check if the tweet contains a specific hashtag."""
         return tag in self.hash_tags
+
+    def is_retweet(self) -> bool:
+        """Check if the tweet is a retweet or quote retweet."""
+        return self.text.startswith("RT @")
+
+    def is_quote_tweet(self) -> bool:
+        """Check if the tweet is a quote tweet."""
+        return "RT @" in self.text
 
     @classmethod
     def from_dict(cls, data: dict) -> "Tweet":

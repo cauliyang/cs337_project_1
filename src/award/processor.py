@@ -152,27 +152,28 @@ class LoggingPipeline(ProcessorPipeline):
 
     def apply(self, data: str | Tweet) -> str | Tweet | None:
         result = data
-        print(f"\nApplying pipeline to {data}")
+        print(f"\nBefore: {data}")
         for i, processor in enumerate(self.processors):
-            print(f"Step {i}: {processor}")
+            print(f" Step {i}: {processor}")
 
             if isinstance(processor, BaseFilter):
                 # Filters return bool - check the result
                 passed = processor.process(result)
-                print(f"  → Filter result: {passed}")
+                print(f"   → Filter result: {passed}")
                 if not passed:
-                    print(f"  → Filtered out by {processor}")
+                    print(f"   → Filtered out by {processor}")
                     return None
                 # Keep the current result (don't replace with bool)
             elif isinstance(processor, BaseCleaner):
                 # Cleaners transform the data
                 result = processor.process(result)
                 if isinstance(result, Tweet):
-                    print(f"  → Cleaned text: {result.text[:50]}...")
+                    print(f"   → Cleaned text: {result.text[:50]}...")
                 else:
-                    print(f"  → Cleaned text: {result[:50]}...")
+                    print(f"   → Cleaned text: {result[:50]}...")
             else:
                 # Generic processor
                 result = processor.process(result)
 
+        print(f"After: {result}")
         return result
