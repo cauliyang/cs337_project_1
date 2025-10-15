@@ -1,5 +1,7 @@
 import re
 
+from inflection import humanize, underscore
+
 from award.processor import BaseProcessor
 from award.tweet import Tweet
 
@@ -55,7 +57,6 @@ class TagUsernameTransformer(BaseProcessor):
     def process(self, tweet: Tweet) -> Tweet:
         """Transform hashtags and usernames in the tweet text."""
         # Delayed import for performance if unused
-        from inflection import humanize, underscore
 
         def username_repl(m):
             username = m.group()[1:]  # Remove '@'
