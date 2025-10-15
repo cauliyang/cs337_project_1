@@ -4,6 +4,7 @@ import zipfile
 from rich import print
 
 from award.extract import Extractor
+from award.filter import LanguageFilter
 
 
 def test_read_zip_json():
@@ -22,3 +23,11 @@ def test_extract():
         count += 1
         if count > 10:
             break
+
+
+def test_extract_with_filters():
+    text_filters = [LanguageFilter()]
+    extractor = Extractor("data/gg2013.json.zip", text_filters, [])
+    count = len(list(extractor.extract()))
+    print(count)
+    assert count > 0
