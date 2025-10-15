@@ -11,7 +11,7 @@ from pprint import pprint
 
 from nltk.metrics import edit_distance
 
-from award import gg_api
+import gg_api
 
 global toMovie
 toMovie = {
