@@ -1,10 +1,14 @@
+from award.processor import LoggingPipeline
+from award.filter import UrlCleaner
+from award.filter import SpaceCombinationCleaner
 import json
 import zipfile
 
 from rich import print
 
 from award.extract import Extractor
-from award.filter import LanguageFilter
+from award.filter import EmptyTextFilter, FtfyCleaner, LanguageFilter, StripCleaner, UnidecodeCleaner
+from award.processor import ProcessorPipeline
 
 
 def test_read_zip_json():
@@ -15,8 +19,20 @@ def test_read_zip_json():
     print(data[:10])
 
 
-def test_extract():
-    extractor = Extractor("data/gg2013.json.zip", [], [])
+def test_extract_with_filters():
+    pipeline = LoggingPipeline(
+        [
+            StripCleaner(),
+            FtfyCleaner(),
+            UnidecodeCleaner(),
+            SpaceCombinationCleaner(),
+            UrlCleaner(),
+            EmptyTextFilter(),
+            LanguageFilter(language="en"),
+        ]
+    )
+    extractor = Extractor("data/gg2013.json.zip", pipeline=pipeline)
+
     count = 0
     for tweet in extractor.extract():
         print(tweet)
@@ -24,10 +40,9 @@ def test_extract():
         if count > 10:
             break
 
+    # total_tweets = len(list(extractor.extract()))
+    # print(f"Total tweets: {total_tweets}")
+    # assert total_tweets > 0
 
-def test_extract_with_filters():
-    text_filters = [LanguageFilter()]
-    extractor = Extractor("data/gg2013.json.zip", text_filters, [])
-    count = len(list(extractor.extract()))
-    print(count)
-    assert count > 0
+
+

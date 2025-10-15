@@ -21,7 +21,6 @@ class Tweet(BaseModel):
     user: User = Field(..., description="User information.")
     timestamp_ms: int = Field(..., description="The timestamp (ms) of the tweet.")
 
-    clean_text: str = Field(default="", description="The cleaned or preprocessed version of the tweet text.")
     hash_tags: list[str] = Field(default_factory=list, description="List of hashtags included in the tweet.")
     retweet_count: int = Field(
         default=0, ge=0, description="Number of times this tweet has been retweeted (non-negative)."
