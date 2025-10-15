@@ -11,7 +11,6 @@ from award.processors import (
     FtfyCleaner,
     LanguageFilter,
     SpaceCombinationCleaner,
-    StripCleaner,
     UnidecodeCleaner,
     UrlCleaner,
 )
@@ -29,7 +28,6 @@ def test_read_zip_json():
 def test_extract_with_filters():
     pipeline = LoggingPipeline(
         [
-            StripCleaner(),
             FtfyCleaner(),
             UnidecodeCleaner(),
             SpaceCombinationCleaner(),
