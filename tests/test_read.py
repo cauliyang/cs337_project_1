@@ -33,6 +33,7 @@ def test_extract_with_filters():
             UnidecodeCleaner(),
             SpaceCombinationCleaner(),
             UrlCleaner(),
+
             EmptyTextFilter(),
             LanguageFilter(language="en"),
             HashTagExtractionTransformer(),  # extract and remove hashtags from text
