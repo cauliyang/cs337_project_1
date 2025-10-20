@@ -16,7 +16,6 @@ class FtfyCleaner(BaseCleaner):
     def clean(self, text: str) -> str:
         return ftfy.fix_text(text)
 
-
 class UnidecodeCleaner(BaseCleaner):
     """Convert unicode to ASCII using unidecode."""
 
