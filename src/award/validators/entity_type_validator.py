@@ -233,6 +233,12 @@ class EntityTypeValidator:
                             return expected_type  # It's the work title
                         return "person"  # Likely the artist/composer
 
+                    # For picture/series awards, if it looks like a person name,
+                    # check if there are work indicators (quotes, hashtags)
+                    # If no work indicators, it's likely a person, not a work
+                    if tweet_text and not self.has_work_indicators(tweet_text, entity):
+                        return "person"  # Person name, not movie/show title
+
             return expected_type
 
         # Signal 2: Person name pattern

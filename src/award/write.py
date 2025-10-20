@@ -67,6 +67,7 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
 
     # Build output content
     lines = []
+    NOT_EXTRACTED = "UNKNOWN"
 
     # Header
     lines.append("=" * 60)
@@ -101,7 +102,7 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
         if winner:
             lines.append(f"  Winner: {winner.title()}")
         else:
-            lines.append("  Winner: (Not extracted)")
+            lines.append(f"  Winner: ({NOT_EXTRACTED})")
 
         # Nominees
         nominees = award_data.get("nominees", [])
@@ -111,7 +112,7 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
                 lines.append(f"    - {nominee.title()}")
         elif "cecil" not in award.lower():
             # Only show message if not Cecil B. DeMille (which has no nominees)
-            lines.append("  Nominees: (Not extracted)")
+            lines.append(f"  Nominees: ({NOT_EXTRACTED})")
 
         # Presenters
         presenters = award_data.get("presenters", [])

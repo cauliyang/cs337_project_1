@@ -57,30 +57,31 @@ class WinnerExtractor(BaseExtractor):
         """
         winners = []
 
-        # Method 1: Pattern matching
-        for pattern_str in self.WINNER_PATTERNS:
+        # Primary method: spaCy NER for clean entity extraction
+        # This is more reliable than regex for avoiding fragments
+        doc = self.nlp(text)
+        for ent in doc.ents:
+            if ent.label_ in ["PERSON", "WORK_OF_ART", "ORG"]:
+                ent_text = ent.text.strip()
+                # More lenient length check to capture full names
+                if ent_text and 2 < len(ent_text) < 60:
+                    winners.append(ent_text)
+
+        # Fallback: Pattern matching only for specific formats
+        # Only use the clearest patterns to avoid noise
+        specific_patterns = [
+            r"\b(?:winner|winners?):\s*([\w\s'-]+?)(?:\s+for|\s+in|\s*$)",  # "Winner: Name"
+            r"\bcongrats?\s+(?:to\s+)?([\w\s'-]+?)(?:\s+for|\s+on|\s*$)",  # "Congrats Name"
+        ]
+
+        for pattern_str in specific_patterns:
             pattern = re.compile(pattern_str, re.IGNORECASE)
             matches = pattern.findall(text)
             for match in matches:
-                # Extract the name part (first group usually)
-                if isinstance(match, tuple):
-                    name = match[0]
-                else:
-                    name = match
-
-                # Clean and validate
-                name = name.strip()
-                if name and 3 < len(name) < 50:  # Reasonable name length
+                name = match.strip() if isinstance(match, str) else match[0].strip()
+                # Only add if not already captured by NER
+                if name and 2 < len(name) < 60 and name not in winners:
                     winners.append(name)
-
-        # Method 2: spaCy NER for PERSON entities near "win" keywords
-        doc = self.nlp(text)
-        for ent in doc.ents:
-            if ent.label_ == "PERSON":
-                # Check if near win keywords
-                ent_text = ent.text.strip()
-                if ent_text and 3 < len(ent_text) < 50:
-                    winners.append(ent_text)
 
         return winners
 
@@ -134,8 +135,8 @@ class WinnerExtractor(BaseExtractor):
                             best_match = template_award
 
                     # Accept if good overlap (use template award to avoid cascade errors)
-                    # BALANCED: 60% overlap balances precision and recall
-                    if best_match and best_overlap >= 0.5:  # 60% overlap with template
+                    # STRICTER: 65% overlap to reduce false positives while maintaining recall
+                    if best_match and best_overlap >= 0.65:  # 65% overlap with template
                         mentioned_awards.append(best_match)
                         award_tweets_map[best_match].append(tweet)
 
@@ -148,9 +149,9 @@ class WinnerExtractor(BaseExtractor):
                     overlap = len(award_words & text_words)
                     overlap_ratio = overlap / len(award_words) if award_words else 0
 
-                    # BALANCED: 60% word overlap for fallback matching
-                    # Balances catching relevant tweets vs avoiding false matches
-                    if overlap_ratio >= 0.5:  # 60% word overlap
+                    # STRICTER: 65% word overlap for fallback matching
+                    # Reduces false matches while maintaining reasonable recall
+                    if overlap_ratio >= 0.65:  # 65% word overlap
                         mentioned_awards.append(award)
                         award_tweets_map[award].append(tweet)
 
@@ -193,13 +194,24 @@ class WinnerExtractor(BaseExtractor):
         # Get expected entity type from award
         expected_type = self.entity_validator.get_expected_type_from_award(award_name)
 
-        # Filter candidates by entity type
+        # Filter out award name fragments (e.g., "best performance", "best actor")
+        # These are noise from tweets mentioning the award itself
+        award_keywords = {"best", "award", "performance", "actor", "actress", "director", "globe", "golden"}
+
+        # Filter candidates by entity type and quality
         filtered_candidates = []
         for winner_name, count in winner_candidates:
+            winner_normalized = normalize_text(winner_name)
+
+            # Skip if it's just award keywords (noise)
+            winner_words = set(winner_normalized.split())
+            if winner_words and winner_words.issubset(award_keywords):
+                continue  # Skip award fragments like "best performance"
+
             # Find tweet context for this winner
             tweet_context = ""
             for tweet in award_tweets:
-                if normalize_text(winner_name) in normalize_text(tweet.text):
+                if winner_normalized in normalize_text(tweet.text):
                     tweet_context = tweet.text
                     break
 
