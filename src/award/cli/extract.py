@@ -248,9 +248,28 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
     print(f"   Nominees: {sum(1 for a in award_data.values() if a['nominees'])}/{len(award_data)}")
     print(f"   Presenters: {sum(1 for a in award_data.values() if a['presenters'])}/{len(award_data)}")
 
-    # Step 9: Generate outputs
+    # Step 9: Extract additional goals (fun categories)
     print("\n" + "-" * 60)
-    print("PHASE 7: Output Generation")
+    print("PHASE 7: Additional Goals Extraction")
+    print("-" * 60)
+
+    try:
+        from award.extractors.additional_goals_extractor import AdditionalGoalsExtractor
+
+        additional_extractor = AdditionalGoalsExtractor(min_mentions=5)
+        # Use all tweets for additional goals detection
+        additional_goals = additional_extractor.extract(all_tweets)
+        print(f"✓ Extracted {len(additional_goals)} additional goals")
+    except Exception as e:
+        print(f"✗ Error extracting additional goals: {e}")
+        import traceback
+
+        traceback.print_exc()
+        additional_goals = {}
+
+    # Step 10: Generate outputs
+    print("\n" + "-" * 60)
+    print("PHASE 8: Output Generation")
     print("-" * 60)
 
     try:
@@ -262,6 +281,7 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
             awards=discovered_awards,  # Use discovered awards for the awards list
             award_data=award_data,  # Use template-based award_data
             year=year,
+            additional_goals=additional_goals,  # Add fun categories
         )
 
         print(f"✓ JSON output: {json_path}")
@@ -274,12 +294,13 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
         traceback.print_exc()
         return
 
-    # Step 7: Summary
+    # Step 11: Summary
     print("\n" + "=" * 60)
     print("EXTRACTION COMPLETE")
     print("=" * 60)
     print(f"Hosts: {len(hosts)}")
     print(f"Discovered Awards: {len(discovered_awards)}")
     print(f"Template Awards (for extraction): {len(template_awards)}")
+    print(f"Additional Goals: {len(additional_goals)}")
     print(f"Results saved to: gg{year}_results.json")
     print("=" * 60)

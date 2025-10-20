@@ -121,6 +121,19 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
             for presenter in presenters:
                 lines.append(f"    - {presenter.title()}")
 
+    # Additional Goals (optional fun categories)
+    if results.get("additional_goals"):
+        lines.append("")
+        lines.append("")
+        lines.append("ADDITIONAL GOALS (OPTIONAL)")
+        lines.append("-" * 60)
+        lines.append("")
+
+        for goal_name, winner in results["additional_goals"].items():
+            lines.append(f"{goal_name}: {winner.title()}")
+
+        lines.append("")
+
     # Create output file path
     output_path = Path(output_dir) / f"gg{year}_results.txt"
 
@@ -132,7 +145,9 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
     return output_path
 
 
-def build_json_output(hosts: list[str], awards: list[str], award_data: dict) -> dict:
+def build_json_output(
+    hosts: list[str], awards: list[str], award_data: dict, additional_goals: dict[str, str] | None = None
+) -> dict:
     """
     Build JSON output structure from extraction results.
 
@@ -140,15 +155,22 @@ def build_json_output(hosts: list[str], awards: list[str], award_data: dict) -> 
         hosts: List of normalized host names
         awards: List of normalized award names
         award_data: Dictionary mapping award names to data (presenters, nominees, winner)
+        additional_goals: Optional dict mapping goal names to winners (e.g., {"Best Dressed": "name"})
 
     Returns:
         Dictionary with proper structure for JSON output
     """
-    return {
+    result = {
         "hosts": hosts,
         "awards": awards,
         "award_data": award_data,
     }
+
+    # Add additional goals if provided (optional, not graded by autograder)
+    if additional_goals:
+        result["additional_goals"] = additional_goals
+
+    return result
 
 
 def generate_outputs(
@@ -157,6 +179,7 @@ def generate_outputs(
     award_data: dict,
     year: str,
     output_dir: str = ".",
+    additional_goals: dict[str, str] | None = None,
 ) -> tuple[Path, Path]:
     """
     Generate both JSON and human-readable output files.
@@ -167,12 +190,13 @@ def generate_outputs(
         award_data: Dictionary mapping award names to data
         year: Year string (e.g., "2013")
         output_dir: Directory to write output files (default: current directory)
+        additional_goals: Optional dict mapping goal names to winners
 
     Returns:
         Tuple of (json_path, text_path)
     """
     # Build output structure
-    results = build_json_output(hosts, awards, award_data)
+    results = build_json_output(hosts, awards, award_data, additional_goals)
 
     # Write both output files
     json_path = write_json_output(results, year, output_dir)

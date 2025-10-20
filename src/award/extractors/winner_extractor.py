@@ -20,11 +20,11 @@ class WinnerExtractor(BaseExtractor):
 
     # Winner-related patterns
     WINNER_PATTERNS = [
-        r"\b([\w\s]+?)\s+(?:wins|won|winning)\s+(?:the\s+)?(?:golden\s+globe\s+for\s+)?(.+)",
-        r"\b(?:winner|winners?):\s*([\w\s]+)",
-        r"\b([\w\s]+?)\s+(?:takes?|gets?|receives?)\s+(?:the\s+)?(?:award|globe)",
-        r"\bcongrats?\s+(?:to\s+)?([\w\s]+)",
-        r"\b([\w\s]+?)\s+(?:wins|won)\b",
+        re.compile(r"\b([\w\s]+?)\s+(?:wins|won|winning)\s+(?:the\s+)?(?:golden\s+globe\s+for\s+)?(.+)", re.IGNORECASE),
+        re.compile(r"\b(?:winner|winners?):\s*([\w\s]+)", re.IGNORECASE),
+        re.compile(r"\b([\w\s]+?)\s+(?:takes?|gets?|receives?)\s+(?:the\s+)?(?:award|globe)", re.IGNORECASE),
+        re.compile(r"\bcongrats?\s+(?:to\s+)?([\w\s]+)", re.IGNORECASE),
+        re.compile(r"\b([\w\s]+?)\s+(?:wins|won)\b", re.IGNORECASE),
     ]
 
     def __init__(self, min_mentions: int = 3, *, use_imdb: bool = False):

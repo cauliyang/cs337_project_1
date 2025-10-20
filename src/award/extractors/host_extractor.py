@@ -19,10 +19,10 @@ class HostExtractor(BaseExtractor):
 
     # Host-related patterns
     HOST_PATTERNS = [
-        r"\bhost(?:s|ing|ed)?\b",
-        r"\bemcee\b",
-        r"\bhosting\b",
-        r"\bhosted\s+by\b",
+        re.compile(r"\bhost(?:s|ing|ed)?\b", re.IGNORECASE),
+        re.compile(r"\bemcee\b", re.IGNORECASE),
+        re.compile(r"\bhosting\b", re.IGNORECASE),
+        re.compile(r"\bhosted\s+by\b", re.IGNORECASE),
     ]
 
     def __init__(self, min_mentions: int = 100, top_n: int = 2):
