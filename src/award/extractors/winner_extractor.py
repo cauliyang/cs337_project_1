@@ -134,7 +134,8 @@ class WinnerExtractor(BaseExtractor):
                             best_match = template_award
 
                     # Accept if good overlap (use template award to avoid cascade errors)
-                    if best_match and best_overlap >= 0.5:  # 50% overlap with template
+                    # BALANCED: 60% overlap balances precision and recall
+                    if best_match and best_overlap >= 0.5:  # 60% overlap with template
                         mentioned_awards.append(best_match)
                         award_tweets_map[best_match].append(tweet)
 
@@ -147,8 +148,9 @@ class WinnerExtractor(BaseExtractor):
                     overlap = len(award_words & text_words)
                     overlap_ratio = overlap / len(award_words) if award_words else 0
 
-                    # More strict threshold for fallback
-                    if overlap_ratio >= 0.5:  # 50% word overlap
+                    # BALANCED: 60% word overlap for fallback matching
+                    # Balances catching relevant tweets vs avoiding false matches
+                    if overlap_ratio >= 0.5:  # 60% word overlap
                         mentioned_awards.append(award)
                         award_tweets_map[award].append(tweet)
 
@@ -226,7 +228,11 @@ class WinnerExtractor(BaseExtractor):
         return ""
 
     def extract(  # type: ignore[override]
-        self, tweets: list[Tweet], awards: list[str], tweet_awards: dict[int, list[str]] | None = None
+        self,
+        tweets: list[Tweet],
+        awards: list[str],
+        tweet_awards: dict[int, list[str]] | None = None,
+        hosts: list[str] | None = None,
     ) -> dict[str, str]:
         """
         Extract winners for each award category using POS-detected award mentions.
@@ -235,6 +241,7 @@ class WinnerExtractor(BaseExtractor):
             tweets: List of winner-related tweets
             awards: List of normalized template award names (to avoid cascade errors)
             tweet_awards: Optional mapping of tweet_id -> [POS-detected award phrases]
+            hosts: Optional list of hosts to filter out from winner candidates
 
         Returns:
             Dictionary mapping award -> winner name
@@ -246,6 +253,15 @@ class WinnerExtractor(BaseExtractor):
 
         # Associate winners with awards using POS-detected mentions
         award_winner_candidates, award_tweets_map = self.associate_winners_with_awards(tweets, awards, tweet_awards)
+
+        # Filter out hosts from all candidates
+        hosts_normalized = set([normalize_text(h) for h in (hosts or [])])
+        if hosts_normalized:
+            for award in award_winner_candidates:
+                # Remove host names from candidates
+                award_winner_candidates[award] = [
+                    (name, count) for name, count in award_winner_candidates[award] if name not in hosts_normalized
+                ]
 
         # Select top winner for each award
         winners = {}
