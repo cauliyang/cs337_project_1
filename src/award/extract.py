@@ -3,7 +3,7 @@ import zipfile
 from collections.abc import Generator
 from pathlib import Path
 
-from .processor import BaseProcessor, ProcessorPipeline
+from .processor import BaseProcessor, LoggingPipeline, ProcessorPipeline
 from .tweet import Tweet
 
 
@@ -33,6 +33,8 @@ class Extractor:
         json_file: str | Path,
         pipeline: ProcessorPipeline | None = None,
         processors: list[BaseProcessor] | None = None,
+        *,
+        log: bool = False,
     ):
         """
         Args:
@@ -46,7 +48,7 @@ class Extractor:
         if pipeline:
             self.pipeline = pipeline
         elif processors:
-            self.pipeline = ProcessorPipeline(processors)
+            self.pipeline = ProcessorPipeline(processors) if not log else LoggingPipeline(processors)
         else:
             self.pipeline = ProcessorPipeline()
 

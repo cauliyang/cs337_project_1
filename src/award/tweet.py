@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, TypeAdapter
 
 
 class User(BaseModel):
@@ -75,6 +75,9 @@ class Tweet(BaseModel):
             id=data["id"],
             timestamp_ms=data["timestamp_ms"],
         )
+
+
+TweetListAdapter = TypeAdapter(list[Tweet])
 
 
 class Award(BaseModel):

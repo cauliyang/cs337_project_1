@@ -1,3 +1,6 @@
+import re
+from collections import defaultdict
+
 import langdetect
 
 from award.processor import BaseFilter
@@ -61,12 +64,41 @@ class KeywordFilter(BaseFilter):
     """Filter text containing specific keywords."""
 
     def __init__(self, keywords: list[str], case_sensitive: bool = False):
-        super().__init__(processor_type=f"keywords={len(keywords)}")
+        super().__init__(processor_type=f"keywords({len(keywords)})={keywords}")
         self.keywords = keywords
         self.case_sensitive = case_sensitive
 
     def filter_text(self, text: str) -> bool:
-        """Return True if text contains any keyword."""
+        """Return False if text contains any keyword."""
         search_text = text if self.case_sensitive else text.lower()
         search_keywords = self.keywords if self.case_sensitive else [k.lower() for k in self.keywords]
-        return any(keyword in search_text for keyword in search_keywords)
+        return not any(keyword in search_text for keyword in search_keywords)
+
+
+class GroupTweetsFilter(BaseFilter):
+    """Filter and Group tweets"""
+
+    _win_pattern = re.compile(r"\bwin(s|ning|ner|ners)?|won\b", re.IGNORECASE)
+    _host_pattern = re.compile(r"\bhost(s|ed|ing)?\b", re.IGNORECASE)
+    _presenter_pattern = re.compile(r"\bpresent(s|ed|ing|er|ers)?\b", re.IGNORECASE)
+    _nominee_pattern = re.compile(r"\bnominat(e|es|ed|ing|ion|ions)|nominee(s)?\b", re.IGNORECASE)
+
+    def __init__(self):
+        super().__init__(processor_type="filter and group by info")
+        self.groups: dict[str, list[Tweet]] = defaultdict(list)
+
+    def filter_tweet(self, tweet: Tweet) -> bool:
+        """Return a tuple of (user_screen_name, date)."""
+        if re.search(self._win_pattern, tweet.text):
+            self.groups["win"].append(tweet)
+            return True
+        elif re.search(self._host_pattern, tweet.text):
+            self.groups["host"].append(tweet)
+            return True
+        elif re.search(self._presenter_pattern, tweet.text):
+            self.groups["presenter"].append(tweet)
+            return True
+        elif re.search(self._nominee_pattern, tweet.text):
+            self.groups["nominee"].append(tweet)
+            return True
+        return False

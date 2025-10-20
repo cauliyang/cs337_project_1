@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 
 from inflection import humanize, underscore
 

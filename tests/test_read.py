@@ -5,7 +5,7 @@ import zipfile
 from rich import print
 
 from award.extract import Extractor
-from award.processor import LoggingPipeline
+from award.processor import ProcessorPipeline
 from award.processors import (
     EmptyTextFilter,
     FtfyCleaner,
@@ -27,13 +27,12 @@ def test_read_zip_json():
 
 
 def test_extract_with_filters():
-    pipeline = LoggingPipeline(
+    pipeline = ProcessorPipeline(
         [
             FtfyCleaner(),
             UnidecodeCleaner(),
             SpaceCombinationCleaner(),
             UrlCleaner(),
-
             EmptyTextFilter(),
             LanguageFilter(language="en"),
             HashTagExtractionTransformer(),  # extract and remove hashtags from text
@@ -42,12 +41,16 @@ def test_extract_with_filters():
     )
     extractor = Extractor("data/gg2013.json.zip", pipeline=pipeline)
 
-    count = 0
-    for _tweet in extractor.extract():
-        count += 1
-        if count > 10:
-            break
+    # count = 0
+    # for _tweet in extractor.extract():
+    #     count += 1
+    #     if count > 10:
+    #         break
+    import time
 
-    # total_tweets = len(list(extractor.extract()))
-    # print(f"Total tweets: {total_tweets}")
-    # assert total_tweets > 0
+    start = time.time()
+    total_tweets = len(list(extractor.extract()))
+    print(f"Total tweets: {total_tweets}")
+    assert total_tweets > 0
+    end = time.time()
+    print(f"Time taken: {end - start} seconds")
