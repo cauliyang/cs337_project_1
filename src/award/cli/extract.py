@@ -6,6 +6,7 @@ from award.extract import Extractor
 from award.processor import ProcessorPipeline
 from award.processors.cleaner import FtfyCleaner, UnidecodeCleaner, UrlCleaner, WhitespaceCollapseCleaner
 from award.processors.filter import EmptyTextFilter, GroupTweetsFilter, KeywordFilter
+from award.tweet import TweetListAdapter
 
 # Global variable for template award names (hardcoded to avoid cascading errors)
 # These are the official Golden Globes 2013 award categories
@@ -41,51 +42,50 @@ AWARD_NAMES = [
 
 
 
-def main(input_file: Path, year: str):
-    try:
-        # Create text cleaning pipeline
-        text_pipeline = ProcessorPipeline(
-            [
-                FtfyCleaner(),
-                UrlCleaner(),
-                UnidecodeCleaner(),
-                WhitespaceCollapseCleaner(),
-                EmptyTextFilter(),
-            ]
-        )
+def main(input_file: Path, year: str, * , save_grouped_tweets: bool = False):
 
-        # Create grouping pipeline
-        group_filter = GroupTweetsFilter()
-        group_pipeline = ProcessorPipeline(
-            [
-                KeywordFilter(keywords=["RT"], case_sensitive=True),  # Filter out retweets
-                group_filter,
-            ]
-        )
+    # Create text cleaning pipeline
+    text_pipeline = ProcessorPipeline(
+        [
+            FtfyCleaner(),
+            UrlCleaner(),
+            UnidecodeCleaner(),
+            WhitespaceCollapseCleaner(),
+            EmptyTextFilter(),
+        ]
+    )
 
-        # Combine pipelines: group first, then clean
-        extractor = Extractor(
-            input_file,
-            pipeline=group_pipeline + text_pipeline,
-            log=False,  # Disable verbose logging
-        )
+    # Create grouping pipeline
+    group_filter = GroupTweetsFilter()
+    group_pipeline = ProcessorPipeline(
+        [
+            KeywordFilter(keywords=["RT"], case_sensitive=True),  # Filter out retweets
+            group_filter,
+        ]
+    )
 
-        # Extract and collect all tweets
-        all_tweets = list(extractor.extract())
-        print(f"✓ Loaded, filtered and processed {len(all_tweets)} tweets")
+    # Combine pipelines: group first, then clean
+    extractor = Extractor(
+        input_file,
+        pipeline=group_pipeline + text_pipeline,
+        log=False,  # Disable verbose logging
+    )
 
-        # Get grouped tweets
-        grouped_tweets = group_filter.groups
-        print(f"✓ Tweets grouped into {len(grouped_tweets)} categories:")
+    # Extract and collect all tweets
+    all_tweets = list(extractor.extract())
+    print(f"✓ Loaded, filtered and processed {len(all_tweets)} tweets")
+
+    # Get grouped tweets
+    grouped_tweets = group_filter.groups
+    print(f"✓ Tweets grouped into {len(grouped_tweets)} categories:")
+    for group, tweets in grouped_tweets.items():
+        print(f"  - {group}: {len(tweets)} tweets")
+
+    if save_grouped_tweets:
         for group, tweets in grouped_tweets.items():
-            print(f"  - {group}: {len(tweets)} tweets")
-
-    except Exception as e:
-        print(f"✗ Error loading tweets: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return
+            with open(f"data/gg{year}_{group}.json", "wb") as f:
+                json_data = TweetListAdapter.dump_json(tweets)
+                f.write(json_data)
 
     # Step 3: Extract hosts (using host-specific tweets)
     print("\n" + "-" * 60)
