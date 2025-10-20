@@ -2,10 +2,10 @@
 
 from pathlib import Path
 
-from award.extract import Extractor
 from award.processor import ProcessorPipeline
 from award.processors.cleaner import FtfyCleaner, UnidecodeCleaner, UrlCleaner, WhitespaceCollapseCleaner
 from award.processors.filter import EmptyTextFilter, GroupTweetsFilter, KeywordFilter
+from award.read import TweetReader
 from award.tweet import TweetListAdapter
 
 # Global variable for template award names (hardcoded to avoid cascading errors)
@@ -63,14 +63,14 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
     )
 
     # Combine pipelines: group first, then clean
-    extractor = Extractor(
+    tweet_reader = TweetReader(
         input_file,
         pipeline=group_pipeline + text_pipeline,
         log=False,  # Disable verbose logging
     )
 
     # Extract and collect all tweets
-    all_tweets = list(extractor.extract())
+    all_tweets = list(tweet_reader.read())
     print(f"✓ Loaded, filtered and processed {len(all_tweets)} tweets")
 
     # Get grouped tweets

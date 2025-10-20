@@ -1,6 +1,5 @@
 """Presenter extractor for identifying award presenters from tweets."""
 
-import re
 from collections import Counter, defaultdict
 
 from award.processors.base import BaseExtractor
@@ -19,11 +18,11 @@ class PresenterExtractor(BaseExtractor):
 
     # Presenter-related patterns
     PRESENTER_PATTERNS = [
-        re.compile(r"\b(?:presented|presenting|presents?)\s+(?:by\s+)?", re.IGNORECASE),
-        re.compile(r"\b(?:introduces?|introduced|introducing)\s+", re.IGNORECASE),
-        re.compile(r"\bpresenter(?:s)?\s*(?::|\bis\b)", re.IGNORECASE),
-        re.compile(r"\bwill\s+present\b", re.IGNORECASE),
-        re.compile(r"\bhanded\s+out\s+the\s+award\b", re.IGNORECASE),
+        r"\b(?:presented|presenting|presents?)\s+(?:by\s+)?",
+        r"\b(?:introduces?|introduced|introducing)\s+",
+        r"\bpresenter(?:s)?\s*(?::|\bis\b)",
+        r"\bwill\s+present\b",
+        r"\bhanded\s+out\s+the\s+award\b",
     ]
 
     def __init__(self, min_mentions: int = 3, top_n: int = 2):
@@ -41,6 +40,7 @@ class PresenterExtractor(BaseExtractor):
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions presenters."""
+        # TODO: use patterns instead of keywords
         keywords = [
             "present",
             "presented",

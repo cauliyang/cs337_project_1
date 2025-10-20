@@ -4,7 +4,6 @@ import zipfile
 
 from rich import print
 
-from award.extract import Extractor
 from award.processor import ProcessorPipeline
 from award.processors import (
     EmptyTextFilter,
@@ -15,6 +14,7 @@ from award.processors import (
     WhitespaceCollapseCleaner,
 )
 from award.processors.transformer import HashTagExtractionTransformer, TagUsernameTransformer
+from award.read import TweetReader
 
 
 def test_read_zip_json():
@@ -39,7 +39,7 @@ def test_extract_with_filters():
             TagUsernameTransformer(),  # transform hashtags and usernames to human-readable format
         ]
     )
-    extractor = Extractor("data/gg2013.json.zip", pipeline=pipeline)
+    tweet_reader = TweetReader("data/gg2013.json.zip", pipeline=pipeline)
 
     # count = 0
     # for _tweet in extractor.extract():
@@ -49,7 +49,7 @@ def test_extract_with_filters():
     import time
 
     start = time.time()
-    total_tweets = len(list(extractor.extract()))
+    total_tweets = len(list(tweet_reader.read()))
     print(f"Total tweets: {total_tweets}")
     assert total_tweets > 0
     end = time.time()

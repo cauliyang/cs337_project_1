@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from award.extract import Extractor
 from award.processor import ProcessorPipeline
 from award.processors import (
     EmptyTextFilter,
@@ -13,6 +12,7 @@ from award.processors import (
 )
 from award.processors.filter import GroupTweetsFilter
 from award.processors.transformer import HashTagExtractionTransformer
+from award.read import TweetReader
 from award.utils import Timer
 
 
@@ -32,11 +32,11 @@ def main(input_file: Path, output_file: Path):
 
     group_filter = GroupTweetsFilter()
     group_pipeline = ProcessorPipeline([KeywordFilter(keywords=["RT"], case_sensitive=True), group_filter])
-    extractor = Extractor(input_file, pipeline=group_pipeline + text_pipeline)
+    tweet_reader = TweetReader(input_file, pipeline=group_pipeline + text_pipeline)
 
     with Timer("Extracting and preprocessing tweets"):
-        tweets = list(extractor.extract())
-        total_tweets = len(list(extractor.extract()))
+        tweets = list(tweet_reader.read())
+        total_tweets = len(list(tweet_reader.read()))
         print(f"Total tweets after preprocessing: {total_tweets}")
 
     for group, tweets in group_filter.groups.items():

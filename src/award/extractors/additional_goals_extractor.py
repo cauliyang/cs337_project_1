@@ -24,34 +24,34 @@ class AdditionalGoalsExtractor(BaseExtractor):
 
     # Pattern definitions for each category
     BEST_DRESSED_PATTERNS = [
-        re.compile(r"\bbest\s+dressed\b", re.IGNORECASE),
-        re.compile(r"\blooks?\s+(?:amazing|stunning|gorgeous|beautiful|fabulous)\b", re.IGNORECASE),
-        re.compile(r"\b(?:love|loved)\s+(?:her|his|their)\s+(?:dress|gown|outfit|look)\b", re.IGNORECASE),
+        r"\bbest\s+dressed\b",
+        r"\blooks?\s+(?:amazing|stunning|gorgeous|beautiful|fabulous)\b",
+        r"\b(?:love|loved)\s+(?:her|his|their)\s+(?:dress|gown|outfit|look)\b",
     ]
 
     WORST_DRESSED_PATTERNS = [
-        re.compile(r"\bworst\s+dressed\b", re.IGNORECASE),
-        re.compile(r"\bterrible\s+(?:dress|gown|outfit|look)\b", re.IGNORECASE),
-        re.compile(r"\bwhat\s+was\s+(?:she|he)\s+wearing\b", re.IGNORECASE),
-        re.compile(r"\bfashion\s+(?:disaster|fail)\b", re.IGNORECASE),
+        r"\bworst\s+dressed\b",
+        r"\bterrible\s+(?:dress|gown|outfit|look)\b",
+        r"\bwhat\s+was\s+(?:she|he)\s+wearing\b",
+        r"\bfashion\s+(?:disaster|fail)\b",
     ]
 
     SPEECH_PATTERNS = [
-        re.compile(r"\bspeech\b", re.IGNORECASE),
-        re.compile(r"\bacceptance\s+speech\b", re.IGNORECASE),
-        re.compile(r"\bthank\s+you\s+speech\b"),
-        re.compile(r"\bspoke\b", re.IGNORECASE),
+        r"\bspeech\b",
+        r"\bacceptance\s+speech\b",
+        r"\bthank\s+you\s+speech\b",
+        r"\bspoke\b",
     ]
 
     POSITIVE_SPEECH = [
-        re.compile(r"\bbest\s+speech\b", re.IGNORECASE),
-        re.compile(r"\b(?:amazing|great|incredible|moving|touching)\s+speech\b", re.IGNORECASE),
-        re.compile(r"\bloved\s+(?:her|his|their)\s+speech\b", re.IGNORECASE),
+        r"\bbest\s+speech\b",
+        r"\b(?:amazing|great|incredible|moving|touching)\s+speech\b",
+        r"\bloved\s+(?:her|his|their)\s+speech\b",
     ]
 
     NEGATIVE_SPEECH = [
-        re.compile(r"\bworst\s+speech\b", re.IGNORECASE),
-        re.compile(r"\b(?:awkward|rambling|long|boring)\s+speech\b", re.IGNORECASE),
+        r"\bworst\s+speech\b",
+        r"\b(?:awkward|rambling|long|boring)\s+speech\b",
     ]
 
     def __init__(self, min_mentions: int = 5):

@@ -7,14 +7,14 @@ from .processor import BaseProcessor, LoggingPipeline, ProcessorPipeline
 from .tweet import Tweet
 
 
-class Extractor:
+class TweetReader:
     """Extract and process tweets from a JSON file using a processor pipeline.
 
     The pipeline can contain any combination of filters and cleaners.
     They are applied in sequence to each tweet.
 
     Example:
-        extractor = Extractor(
+        extractor = TweetReader(
             "data.json.zip",
             pipeline=ProcessorPipeline([
                 FtfyCleaner(),
@@ -52,8 +52,8 @@ class Extractor:
         else:
             self.pipeline = ProcessorPipeline()
 
-    def extract(self) -> Generator[Tweet, None, None]:
-        """Extract tweets, applying the pipeline to each one.
+    def read(self) -> Generator[Tweet, None, None]:
+        """Read tweets, applying the pipeline to each one.
 
         Yields:
             Tweet objects that pass all filters (after cleaning)
@@ -84,7 +84,7 @@ class Extractor:
                 continue
 
     def __call__(self) -> Generator[Tweet, None, None]:
-        return self.extract()
+        return self.read()
 
     def __repr__(self) -> str:
         return f"Extractor(file={self.json_file.name}, pipeline={self.pipeline})"

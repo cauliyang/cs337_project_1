@@ -1,5 +1,6 @@
 """Nominee extractor for identifying award nominees from tweets."""
 
+import re
 from collections import Counter, defaultdict
 
 from award.processors.base import BaseExtractor
@@ -19,10 +20,10 @@ class NomineeExtractor(BaseExtractor):
 
     # Nominee-related patterns
     NOMINEE_PATTERNS = [
-        r"\b(?:nominated|nominee|nomination)s?\b",
-        r"\b(?:nominated|nominee)\s+(?:for\s+)?(?:the\s+)?",
-        r"\bnominees?\s+(?:are|include|:)\s*",
-        r"\b(?:is|are|was|were)\s+nominated\b",
+        re.compile(r"\b(?:nominated|nominee|nomination)s?\b", re.IGNORECASE),
+        re.compile(r"\b(?:nominated|nominee)\s+(?:for\s+)?(?:the\s+)?", re.IGNORECASE),
+        re.compile(r"\bnominees?\s+(?:are|include|:)\s*", re.IGNORECASE),
+        re.compile(r"\b(?:is|are|was|were)\s+nominated\b", re.IGNORECASE),
     ]
 
     def __init__(self, min_mentions: int = 3, top_n: int = 5):
@@ -41,6 +42,8 @@ class NomineeExtractor(BaseExtractor):
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions nominees."""
+        # TODO: use patterns instead of keywords
+
         keywords = ["nominated", "nominee", "nominees", "nomination", "nominations"]
         text_lower = text.lower()
         return any(keyword in text_lower for keyword in keywords)
