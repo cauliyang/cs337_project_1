@@ -2,19 +2,10 @@
 
 import time
 from collections import defaultdict
-from functools import reduce
 
 import nltk
 import spacy
 from spacy.language import Language
-
-from award.processors.cleaner import (
-    AlphanumericCleaner,
-    FtfyCleaner,
-    LowercaseCleaner,
-    UnidecodeCleaner,
-    WhitespaceCollapseCleaner,
-)
 
 
 def load_nltk_data():
@@ -117,43 +108,6 @@ def get_nlp() -> Language:
     if _NLP_PIPELINE is None:
         _NLP_PIPELINE = load_nlp_pipeline()
     return _NLP_PIPELINE
-
-
-def normalize_text(text: str) -> str:
-    """
-    Normalize text to match autograder's norm_text() function.
-
-    This function performs the following transformations:
-    1. Fix encoding issues using ftfy
-    2. Convert unicode characters to ASCII using unidecode
-    3. Convert to lowercase
-    4. Keep only alphanumeric characters and spaces
-    5. Normalize whitespace
-
-    Args:
-        text: Original text (e.g., "Daniel Day-Lewis", "Zoë Saldana")
-
-    Returns:
-        Normalized text (e.g., "daniel daylewis", "zoe saldana")
-
-    Examples:
-        >>> normalize_text("Daniel Day-Lewis")
-        'daniel daylewis'
-        >>> normalize_text("Zoë Saldana")
-        'zoe saldana'
-        >>> normalize_text("Best Motion Picture - Drama")
-        'best motion picture drama'
-    """
-
-    cleaners = [
-        FtfyCleaner(),
-        UnidecodeCleaner(),
-        AlphanumericCleaner(),
-        LowercaseCleaner(),
-        WhitespaceCollapseCleaner(),
-    ]
-
-    return reduce(lambda x, y: y.clean(x), cleaners, text)
 
 
 class Timer:

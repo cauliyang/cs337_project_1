@@ -7,8 +7,9 @@ from difflib import SequenceMatcher
 from nltk import RegexpParser
 
 from award.processors.base import BaseExtractor
+from award.processors.cleaner import normalize_text
 from award.tweet import Tweet
-from award.utils import load_nltk_data, normalize_text
+from award.utils import load_nltk_data
 
 
 class AwardExtractor(BaseExtractor):

@@ -6,6 +6,7 @@ from .cleaner import (
     UnidecodeCleaner,
     UrlCleaner,
     WhitespaceCollapseCleaner,
+    normalize_text,
 )
 from .filter import EmptyTextFilter, KeywordFilter, LanguageFilter, MinLengthFilter, RetweetFilter
 from .transformer import HashTagExtractionTransformer, TagUsernameTransformer
@@ -25,5 +26,6 @@ __all__ = [
     "HashTagExtractionTransformer",
     "TagUsernameTransformer",
     "AlphanumericCleaner",
+    "normalize_text",
     "WhitespaceCollapseCleaner",
 ]

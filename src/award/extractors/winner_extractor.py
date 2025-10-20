@@ -3,10 +3,10 @@
 import re
 from collections import Counter, defaultdict
 
-from award.nlp import get_nlp
 from award.processors.base import BaseExtractor
+from award.processors.cleaner import normalize_text
 from award.tweet import Tweet
-from award.utils import normalize_text
+from award.utils import get_nlp
 from award.validators import EntityTypeValidator
 
 

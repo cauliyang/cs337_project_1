@@ -1,4 +1,5 @@
 import re
+from functools import reduce
 
 import ftfy
 import unidecode
@@ -75,3 +76,40 @@ class AlphanumericCleaner(BaseCleaner):
 
     def clean(self, text: str) -> str:
         return "".join([c for c in text if c.isalnum() or c.isspace()])
+
+
+def normalize_text(text: str) -> str:
+    """
+    Normalize text to match autograder's norm_text() function.
+
+    This function performs the following transformations:
+    1. Fix encoding issues using ftfy
+    2. Convert unicode characters to ASCII using unidecode
+    3. Convert to lowercase
+    4. Keep only alphanumeric characters and spaces
+    5. Normalize whitespace
+
+    Args:
+        text: Original text (e.g., "Daniel Day-Lewis", "Zoë Saldana")
+
+    Returns:
+        Normalized text (e.g., "daniel daylewis", "zoe saldana")
+
+    Examples:
+        >>> normalize_text("Daniel Day-Lewis")
+        'daniel daylewis'
+        >>> normalize_text("Zoë Saldana")
+        'zoe saldana'
+        >>> normalize_text("Best Motion Picture - Drama")
+        'best motion picture drama'
+    """
+
+    cleaners = [
+        FtfyCleaner(),
+        UnidecodeCleaner(),
+        AlphanumericCleaner(),
+        LowercaseCleaner(),
+        WhitespaceCollapseCleaner(),
+    ]
+
+    return reduce(lambda x, y: y.clean(x), cleaners, text)

@@ -4,8 +4,9 @@ import re
 from collections import Counter
 
 from award.processors.base import BaseExtractor
+from award.processors.cleaner import normalize_text
 from award.tweet import Tweet
-from award.utils import extract_persons, get_nlp, normalize_text
+from award.utils import extract_persons, get_nlp
 
 
 class HostExtractor(BaseExtractor):
