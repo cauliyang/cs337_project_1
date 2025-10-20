@@ -27,7 +27,7 @@ class WinnerExtractor(BaseExtractor):
         r"\b([\w\s]+?)\s+(?:wins|won)\b",
     ]
 
-    def __init__(self, min_mentions: int = 5):
+    def __init__(self, min_mentions: int = 3):
         """
         Initialize winner extractor.
 
@@ -159,11 +159,16 @@ class WinnerExtractor(BaseExtractor):
             potential_winners = self.extract_winners_from_tweet(tweet.text)
 
             # Associate winners with mentioned awards
+            # Weight tweets with strong winner signals more heavily
+            text_lower = tweet.text.lower()
+            strong_winner_signals = [" wins ", " won ", " winner ", " winning ", "congrats", "congratulations"]
+            weight = 2 if any(signal in text_lower for signal in strong_winner_signals) else 1
+
             for award in mentioned_awards:
                 for winner in potential_winners:
                     winner_normalized = normalize_text(winner)
                     if winner_normalized:
-                        award_winners[award][winner_normalized] += 1
+                        award_winners[award][winner_normalized] += weight
 
         # Convert to sorted lists
         result = {}
@@ -175,15 +180,20 @@ class WinnerExtractor(BaseExtractor):
         return result, award_tweets_map
 
     def select_top_winner(
-        self, winner_candidates: list[tuple[str, int]], award_name: str, award_tweets: list[Tweet]
+        self,
+        winner_candidates: list[tuple[str, int]],
+        award_name: str,
+        award_tweets: list[Tweet],
+        top_n: int = 1,
     ) -> str:
         """
-        Select the most likely winner from candidates.
+        Select the most likely winner from candidates by scoring top N.
 
         Args:
             winner_candidates: List of (winner_name, mention_count) tuples
             award_name: Award category name for entity type validation
             award_tweets: Tweets mentioning this award (for context)
+            top_n: Number of top candidates to consider for scoring (default 3)
 
         Returns:
             Winner name or empty string if no good candidate
@@ -194,19 +204,29 @@ class WinnerExtractor(BaseExtractor):
         # Get expected entity type from award
         expected_type = self.entity_validator.get_expected_type_from_award(award_name)
 
-        # Filter out award name fragments (e.g., "best performance", "best actor")
+        # Filter out award name fragments (e.g., "best performance", "best actor", "cecil b demille")
         # These are noise from tweets mentioning the award itself
         award_keywords = {"best", "award", "performance", "actor", "actress", "director", "globe", "golden"}
+        award_normalized = normalize_text(award_name)
+        award_words = set(award_normalized.split())
 
         # Filter candidates by entity type and quality
         filtered_candidates = []
         for winner_name, count in winner_candidates:
             winner_normalized = normalize_text(winner_name)
+            winner_words = set(winner_normalized.split())
 
             # Skip if it's just award keywords (noise)
-            winner_words = set(winner_normalized.split())
             if winner_words and winner_words.issubset(award_keywords):
                 continue  # Skip award fragments like "best performance"
+
+            # Skip if winner significantly overlaps with award name (>60% overlap)
+            # This catches cases like "cecil b demille" for "cecil b. demille award"
+            if winner_words and award_words:
+                overlap = len(winner_words & award_words)
+                overlap_ratio = overlap / len(winner_words) if winner_words else 0
+                if overlap_ratio > 0.6:
+                    continue  # Skip award name itself
 
             # Find tweet context for this winner
             tweet_context = ""
@@ -226,16 +246,73 @@ class WinnerExtractor(BaseExtractor):
         if not filtered_candidates:
             filtered_candidates = winner_candidates
 
-        # Get top candidate
-        top_winner, top_count = filtered_candidates[0]
+        # Take top N candidates and score them more carefully
+        top_candidates = filtered_candidates[:top_n]
+
+        # Score each candidate based on multiple signals
+        scored_candidates = []
+        for winner_name, base_count in top_candidates:
+            winner_normalized = normalize_text(winner_name)
+            score = 0.0
+
+            # Signal 1: Base frequency (heavily weighted - keep top candidate as default)
+            max_count = top_candidates[0][1]
+            score += (base_count / max_count) * 60  # Up to 60 points (increased from 40)
+
+            # Signal 2: Strong winner context (how many tweets have clear winner signals)
+            strong_context_count = 0
+            total_mentions = 0
+            strong_signals = [" wins ", " won ", " winner is ", " winner:", "congrats", "congratulations"]
+
+            for tweet in award_tweets:
+                text_lower = tweet.text.lower()
+                if winner_normalized in normalize_text(tweet.text):
+                    total_mentions += 1
+                    if any(signal in text_lower for signal in strong_signals):
+                        strong_context_count += 1
+
+            if total_mentions > 0:
+                strong_ratio = strong_context_count / total_mentions
+                # Only boost if ratio is significantly high (>50%)
+                if strong_ratio > 0.5:
+                    score += strong_ratio * 20  # Up to 20 points (reduced from 40)
+
+            # Signal 3: Name completeness (prefer full names over partial)
+            word_count = len(winner_normalized.split())
+            if word_count >= 2:
+                score += 10  # +10 for full names
+            elif word_count >= 3:
+                score += 5  # +5 bonus for very complete names
+
+            # Signal 4: Entity type confidence
+            tweet_context = ""
+            for tweet in award_tweets:
+                if winner_normalized in normalize_text(tweet.text):
+                    tweet_context = tweet.text
+                    break
+
+            entity_type = self.entity_validator.classify(winner_name, award_name, tweet_context)
+            if entity_type == expected_type:
+                score += 10  # +10 for matching entity type
+
+            scored_candidates.append((winner_name, score, base_count))
+
+        # Sort by score (descending)
+        scored_candidates.sort(key=lambda x: x[1], reverse=True)
+
+        # Get best candidate
+        best_winner, best_score, best_count = scored_candidates[0]
+
+        # Clean up the winner name (strip whitespace)
+        best_winner = best_winner.strip()
 
         # Require minimum mentions for confidence
-        if top_count >= self.min_mentions:
-            return top_winner
+        if best_count >= self.min_mentions:
+            return best_winner
 
         # If close to threshold, still return it
-        if top_count >= self.min_mentions - 2:
-            return top_winner
+        if best_count >= self.min_mentions - 2:
+            return best_winner
 
         return ""
 
