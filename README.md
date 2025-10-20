@@ -6,7 +6,7 @@ Extract awards from tweets. Developed for group 4 in CS337, Fall 2025.
 
 - [Logan Mappes]()
 - [Katie Shao]()
-- [Yangyang Li](https://github.com/cauliyang/cs337_project_1.git)
+- [Yangyang Li](yangyang.li@northwestern.edu)
 
 ## How to use
 
@@ -19,6 +19,10 @@ pip install uv
 
 # install dependencies
 uv sync
+
+# extract awards from the tweets
+# save the results
+uv run gg_api.py
 
 # run the autograder
 uv run autograder.py
@@ -36,7 +40,7 @@ make test
 make lint
 ```
 
-## Porject Description
+## Project Description
 
 - <https://github.com/simon-benigeri/gg-project/blob/main/README.md>
 
