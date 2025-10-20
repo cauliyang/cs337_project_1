@@ -7,7 +7,7 @@ from award.processors.base import BaseExtractor
 from award.processors.cleaner import normalize_text
 from award.tweet import Tweet
 from award.utils import get_nlp
-from award.validators import EntityTypeValidator
+from award.validators import ArtistValidator, EntityTypeValidator
 
 
 class WinnerExtractor(BaseExtractor):
@@ -27,17 +27,20 @@ class WinnerExtractor(BaseExtractor):
         r"\b([\w\s]+?)\s+(?:wins|won)\b",
     ]
 
-    def __init__(self, min_mentions: int = 3):
+    def __init__(self, min_mentions: int = 3, *, use_imdb: bool = False):
         """
         Initialize winner extractor.
 
         Args:
             min_mentions: Minimum mention threshold for winner confidence
+            use_imdb: Whether to use IMDb/Cinemagoer for artist validation
         """
         super().__init__()
         self.min_mentions = min_mentions
+        self.use_imdb = use_imdb
         self.nlp = get_nlp()
         self.entity_validator = EntityTypeValidator()
+        self.artist_validator = ArtistValidator() if use_imdb else None
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions winners."""
@@ -245,6 +248,14 @@ class WinnerExtractor(BaseExtractor):
         # If no candidates after filtering, use original list (fallback)
         if not filtered_candidates:
             filtered_candidates = winner_candidates
+
+        # Additional filtering: Use IMDb/Cinemagoer for person awards
+        if self.use_imdb and self.artist_validator and expected_type == "person":
+            # Filter to only real artists found in IMDb
+            imdb_filtered = self.artist_validator.filter_non_artists(filtered_candidates, expected_type)
+            # Only use IMDb-filtered list if it's not empty
+            if imdb_filtered:
+                filtered_candidates = imdb_filtered
 
         # Take top N candidates and score them more carefully
         top_candidates = filtered_candidates[:top_n]

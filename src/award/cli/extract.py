@@ -17,7 +17,7 @@ AWARD_NAMES = [
     "best performance by an actress in a television series - comedy or musical",
     "best foreign language film",
     "best performance by an actor in a supporting role in a motion picture",
-    "best performance by an actress in a supporting role in a series, mini-series or motion picture made for television",
+    "best performance by an actress in a supporting role in a series, mini-series or motion picture made for television",  # noqa: E501
     "best motion picture - comedy or musical",
     "best performance by an actress in a motion picture - comedy or musical",
     "best mini-series or motion picture made for television",
@@ -41,9 +41,7 @@ AWARD_NAMES = [
 ]
 
 
-
-def main(input_file: Path, year: str, * , save_grouped_tweets: bool = False):
-
+def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
     # Create text cleaning pipeline
     text_pipeline = ProcessorPipeline(
         [
