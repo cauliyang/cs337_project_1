@@ -1,4 +1,12 @@
-from .cleaner import FtfyCleaner, LowercaseCleaner, SpaceCombinationCleaner, StripCleaner, UnidecodeCleaner, UrlCleaner
+from .cleaner import (
+    AlphanumericCleaner,
+    FtfyCleaner,
+    LowercaseCleaner,
+    StripCleaner,
+    UnidecodeCleaner,
+    UrlCleaner,
+    WhitespaceCollapseCleaner,
+)
 from .filter import EmptyTextFilter, KeywordFilter, LanguageFilter, MinLengthFilter, RetweetFilter
 from .transformer import HashTagExtractionTransformer, TagUsernameTransformer
 
@@ -16,4 +24,6 @@ __all__ = [
     "RetweetFilter",
     "HashTagExtractionTransformer",
     "TagUsernameTransformer",
+    "AlphanumericCleaner",
+    "WhitespaceCollapseCleaner",
 ]

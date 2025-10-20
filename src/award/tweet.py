@@ -1,6 +1,8 @@
+import json
 from datetime import datetime
+from pathlib import Path
 
-from pydantic import BaseModel, Field, model_validator, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, model_validator
 
 
 class User(BaseModel):
@@ -104,3 +106,34 @@ class Award(BaseModel):
         if self.winner not in self.nominees:
             raise ValueError(f"The winner '{self.winner}' must be one of the nominees: {', '.join(self.nominees)}.")
         return self
+
+
+def load_tweets(file_path: str) -> list[Tweet]:
+    """
+    Load tweets from a JSON file.
+
+    Args:
+        file_path: Path to the JSON file containing tweets
+
+    Returns:
+        List of Tweet objects
+
+    Raises:
+        FileNotFoundError: If the file doesn't exist
+        json.JSONDecodeError: If the file is not valid JSON
+    """
+    path = Path(file_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Tweet file not found: {file_path}")
+
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Handle both list of tweets and dict with tweets key
+    if isinstance(data, dict) and "tweets" in data:
+        data = data["tweets"]
+
+    # Convert to Tweet objects
+    tweets = [Tweet.from_dict(tweet_data) for tweet_data in data]
+
+    return tweets

@@ -1,20 +1,18 @@
 from pathlib import Path
 
 from award.extract import Extractor
-from award.processor import LoggingPipeline, ProcessorPipeline
+from award.processor import ProcessorPipeline
 from award.processors import (
     EmptyTextFilter,
     FtfyCleaner,
     KeywordFilter,
-    LanguageFilter,
-    SpaceCombinationCleaner,
     TagUsernameTransformer,
     UnidecodeCleaner,
     UrlCleaner,
+    WhitespaceCollapseCleaner,
 )
 from award.processors.filter import GroupTweetsFilter
 from award.processors.transformer import HashTagExtractionTransformer
-from award.tweet import TweetListAdapter
 from award.utils import Timer
 
 
@@ -23,7 +21,7 @@ def main(input_file: Path, output_file: Path):
         [
             FtfyCleaner(),
             UnidecodeCleaner(),
-            SpaceCombinationCleaner(),
+            WhitespaceCollapseCleaner(),
             UrlCleaner(),
             EmptyTextFilter(),
             # LanguageFilter(language="en"),  # WARNING: took longer time and can increse > 20 times

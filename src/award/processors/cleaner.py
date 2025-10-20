@@ -16,6 +16,7 @@ class FtfyCleaner(BaseCleaner):
     def clean(self, text: str) -> str:
         return ftfy.fix_text(text)
 
+
 class UnidecodeCleaner(BaseCleaner):
     """Convert unicode to ASCII using unidecode."""
 
@@ -56,11 +57,21 @@ class UrlCleaner(BaseCleaner):
         return re.sub(r"https?://\S+", "", text)
 
 
-class SpaceCombinationCleaner(BaseCleaner):
-    """Clean space combinations from text."""
+class WhitespaceCollapseCleaner(BaseCleaner):
+    """Collapse whitespace from text."""
 
     def __init__(self):
-        super().__init__(processor_type="space combination cleaner")
+        super().__init__(processor_type="whitespace collapse")
 
     def clean(self, text: str) -> str:
         return re.sub(r"\s+", " ", text)
+
+
+class AlphanumericCleaner(BaseCleaner):
+    """Clean text to lowercase + alphanumeric + spaces only."""
+
+    def __init__(self):
+        super().__init__(processor_type="alphanumeric")
+
+    def clean(self, text: str) -> str:
+        return "".join([c for c in text if c.isalnum() or c.isspace()])

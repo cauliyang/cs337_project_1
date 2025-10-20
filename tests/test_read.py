@@ -10,9 +10,9 @@ from award.processors import (
     EmptyTextFilter,
     FtfyCleaner,
     LanguageFilter,
-    SpaceCombinationCleaner,
     UnidecodeCleaner,
     UrlCleaner,
+    WhitespaceCollapseCleaner,
 )
 from award.processors.transformer import HashTagExtractionTransformer, TagUsernameTransformer
 
@@ -31,7 +31,7 @@ def test_extract_with_filters():
         [
             FtfyCleaner(),
             UnidecodeCleaner(),
-            SpaceCombinationCleaner(),
+            WhitespaceCollapseCleaner(),
             UrlCleaner(),
             EmptyTextFilter(),
             LanguageFilter(language="en"),
