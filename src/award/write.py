@@ -1,15 +1,51 @@
 """Output generation for Golden Globes extraction results."""
 
 import json
+from collections import Counter
 from pathlib import Path
+from typing import TypedDict
+
+
+class AwardDataDict(TypedDict, total=False):
+    """Type hint for award data dictionary with candidate lists."""
+
+    presenters: list[str]
+    presenters_candidates: list[str]
+    nominees: list[str]
+    nominee_candidates: list[str]
+    winner: str
+    winner_candidates: list[str]
+
+
+def get_top_candidates(counter: Counter, max_size: int = 10) -> list[str]:
+    """
+    Extract top N candidates from Counter, maintaining rank order.
+
+    Args:
+        counter: Counter object with entity mention frequencies
+        max_size: Maximum number of candidates to return (default: 10)
+
+    Returns:
+        List of candidate names in descending order by frequency
+
+    Example:
+        >>> counter = Counter({"tina fey": 450, "amy poehler": 445, "seth meyers": 20})
+        >>> get_top_candidates(counter, max_size=3)
+        ['tina fey', 'amy poehler', 'seth meyers']
+    """
+    return [entity for entity, count in counter.most_common(max_size)]
 
 
 def write_json_output(results: dict, year: str, output_dir: str = ".") -> Path:
     """
     Write extraction results to JSON file in autograder-compatible format.
 
+    T021: Updated to handle new flat structure with awards as top-level keys.
+
     Args:
-        results: Dictionary with keys 'hosts', 'awards', 'award_data'
+        results: Dictionary with flat structure (awards as top-level keys)
+                 Required keys: 'host', 'host_candidates', 'awards'
+                 Award names as top-level keys with candidate fields
         year: Year string (e.g., "2013")
         output_dir: Directory to write output file (default: current directory)
 
@@ -19,19 +55,29 @@ def write_json_output(results: dict, year: str, output_dir: str = ".") -> Path:
     Raises:
         ValueError: If results dictionary is missing required keys
     """
-    # Validate required keys
-    required_keys = {"hosts", "awards", "award_data"}
+    # Validate required top-level keys for flat structure
+    required_keys = {"host", "host_candidates", "awards"}
     if not required_keys.issubset(results.keys()):
         missing = required_keys - results.keys()
         raise ValueError(f"Results missing required keys: {missing}")
 
-    # Validate award_data structure (not awards list, which can be dynamically discovered)
-    # Note: awards list can contain discovered awards, while award_data uses template awards
-    for award, award_obj in results.get("award_data", {}).items():
-        required_award_keys = {"presenters", "nominees", "winner"}
-        if not required_award_keys.issubset(award_obj.keys()):
-            missing = required_award_keys - award_obj.keys()
-            raise ValueError(f"Award '{award}' missing required keys: {missing}")
+    # Validate that awards in the awards list exist as top-level keys (if they're present)
+    # Note: The "awards" list is discovered awards, which may be a subset of all awards in the JSON
+    for award in results["awards"]:
+        if award in results and isinstance(results[award], dict):
+            award_data = results[award]
+            # Check for required candidate fields
+            required_award_keys = {
+                "presenters",
+                "presenters_candidates",
+                "nominees",
+                "nominee_candidates",
+                "winner",
+                "winner_candidates",
+            }
+            if not required_award_keys.issubset(award_data.keys()):
+                missing = required_award_keys - award_data.keys()
+                raise ValueError(f"Award '{award}' missing required candidate keys: {missing}")
 
     # Create output file path
     output_path = Path(output_dir) / f"gg{year}_results.json"
@@ -49,7 +95,7 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
     Write extraction results to human-readable text file.
 
     Args:
-        results: Dictionary with keys 'hosts', 'awards', 'award_data'
+        results: Dictionary with flat structure
         year: Year string (e.g., "2013")
         output_dir: Directory to write output file (default: current directory)
 
@@ -59,12 +105,6 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
     Raises:
         ValueError: If results dictionary is missing required keys
     """
-    # Validate required keys
-    required_keys = {"hosts", "awards", "award_data"}
-    if not required_keys.issubset(results.keys()):
-        missing = required_keys - results.keys()
-        raise ValueError(f"Results missing required keys: {missing}")
-
     # Build output content
     lines = []
     NOT_EXTRACTED = "UNKNOWN"
@@ -75,23 +115,43 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
     lines.append("=" * 60)
     lines.append("")
 
-    # Hosts
-    lines.append("HOSTS")
+    # Hosts section
+    lines.append("HOST")
     lines.append("-" * 60)
-    if results["hosts"]:
-        for host in results["hosts"]:
-            # Convert to title case for readability
-            lines.append(f"- {host.title()}")
+    host = results.get("host", "")
+    if host:
+        lines.append(f"{host.title()}")
     else:
-        lines.append("- (No hosts extracted)")
+        lines.append("(No host extracted)")
+
+    lines.append("")
+    lines.append("HOST CANDIDATES")
+    lines.append("-" * 60)
+    host_candidates = results.get("host_candidates", [])
+    if host_candidates:
+        for candidate in host_candidates:
+            lines.append(f"- {candidate.title()}")
+    else:
+        lines.append("(No data)")
+
     lines.append("")
 
     # Awards & Winners
     lines.append("AWARDS & WINNERS")
     lines.append("-" * 60)
 
-    for award in results["awards"]:
-        award_data = results["award_data"].get(award, {})
+    # Show all awards that have data (template awards), not just discovered awards
+    # Get all award keys (exclude standard keys and candidate keys)
+    standard_keys = {"host", "host_candidates", "awards"}
+    award_keys = [
+        k
+        for k in results.keys()
+        if k not in standard_keys and not k.endswith("_candidates") and isinstance(results.get(k), dict)
+    ]
+
+    for award in award_keys:
+        # Award data is at top level in flat format
+        award_data = results.get(award, {})
 
         # Award name (title case)
         lines.append("")
@@ -104,6 +164,13 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
         else:
             lines.append(f"  Winner: ({NOT_EXTRACTED})")
 
+        # Winner Candidates
+        winner_candidates = award_data.get("winner_candidates", [])
+        if winner_candidates:
+            lines.append("  Winner Candidates:")
+            for candidate in winner_candidates:
+                lines.append(f"    - {candidate.title()}")
+
         # Nominees
         nominees = award_data.get("nominees", [])
         if nominees:
@@ -111,8 +178,14 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
             for nominee in nominees:
                 lines.append(f"    - {nominee.title()}")
         elif "cecil" not in award.lower():
-            # Only show message if not Cecil B. DeMille (which has no nominees)
             lines.append(f"  Nominees: ({NOT_EXTRACTED})")
+
+        # Nominee Candidates
+        nominee_candidates = award_data.get("nominee_candidates", [])
+        if nominee_candidates:
+            lines.append("  Nominee Candidates:")
+            for candidate in nominee_candidates:
+                lines.append(f"    - {candidate.title()}")
 
         # Presenters
         presenters = award_data.get("presenters", [])
@@ -121,16 +194,44 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
             for presenter in presenters:
                 lines.append(f"    - {presenter.title()}")
 
-    # Additional Goals (optional fun categories)
-    if results.get("additional_goals"):
+        # Presenter Candidates
+        presenters_candidates = award_data.get("presenters_candidates", [])
+        if presenters_candidates:
+            lines.append("  Presenters Candidates:")
+            for candidate in presenters_candidates:
+                lines.append(f"    - {candidate.title()}")
+
+    # Additional Goals
+    # In flat format, additional goals are top-level keys
+    # We need to detect them by looking for keys that are not standard fields or awards
+    standard_keys = {"host", "host_candidates", "awards"} | set(award_keys)
+    goal_keys = [
+        k
+        for k in results.keys()
+        if k not in standard_keys and not k.endswith("_candidates") and not isinstance(results.get(k), dict)
+    ]
+
+    if goal_keys:
         lines.append("")
         lines.append("")
         lines.append("ADDITIONAL GOALS (OPTIONAL)")
         lines.append("-" * 60)
         lines.append("")
 
-        for goal_name, winner in results["additional_goals"].items():
-            lines.append(f"{goal_name}: {winner.title()}")
+        for goal_name in goal_keys:
+            winner = results.get(goal_name, "")
+            lines.append(f"{goal_name}:")
+            if winner:
+                lines.append(f"  Winner: {winner.title()}")
+
+            # Check for candidates
+            candidates_key = f"{goal_name}_candidates"
+            if candidates_key in results:
+                candidates = results[candidates_key]
+                if candidates:
+                    lines.append("  Candidates:")
+                    for candidate in candidates:
+                        lines.append(f"    - {candidate.title()}")
 
         lines.append("")
 
@@ -146,29 +247,86 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
 
 
 def build_json_output(
-    hosts: list[str], awards: list[str], award_data: dict, additional_goals: dict[str, str] | None = None
+    hosts: list[str],
+    awards: list[str],
+    award_data: dict,
+    additional_goals: dict[str, str] | None = None,
+    host_candidates: list[str] | None = None,
+    award_candidates: dict[str, dict[str, list[str]]] | None = None,
+    additional_goals_candidates: dict[str, list[str]] | None = None,
 ) -> dict:
     """
-    Build JSON output structure from extraction results.
+    Build JSON output structure from extraction results with candidate lists.
+
+    This function transforms the extraction results into the autograder-compatible
+    flat JSON format where award names are top-level keys and candidate lists are
+    included for all roles.
 
     Args:
         hosts: List of normalized host names
         awards: List of normalized award names
         award_data: Dictionary mapping award names to data (presenters, nominees, winner)
-        additional_goals: Optional dict mapping goal names to winners (e.g., {"Best Dressed": "name"})
+        additional_goals: Optional dict mapping goal names to winners
+        host_candidates: Optional list of top host candidates (ranked by confidence)
+        award_candidates: Optional dict mapping award names to candidate dicts
+            Format: {award_name: {
+                "presenters_candidates": [list],
+                "nominee_candidates": [list],
+                "winner_candidates": [list]
+            }}
+        additional_goals_candidates: Optional dict mapping goal names to candidate lists
 
     Returns:
-        Dictionary with proper structure for JSON output
-    """
-    result = {
-        "hosts": hosts,
-        "awards": awards,
-        "award_data": award_data,
-    }
+        Dictionary with flat structure for JSON output (autograder-compatible)
 
-    # Add additional goals if provided (optional, not graded by autograder)
+    Note:
+        - Uses singular "host" (not "hosts") per autograder requirements
+        - Award names appear as top-level keys (flat structure, not nested)
+        - Uses hardcoded AWARD_NAMES as keys, discovered awards in "awards" list
+    """
+    # Initialize result with required top-level fields
+    result = {}
+
+    # T017: Implement host and host_candidates field generation
+    # Singular "host" field (first host if multiple, empty string if none)
+    result["host"] = hosts[0] if hosts else ""
+    result["host_candidates"] = host_candidates if host_candidates is not None else []
+
+    # Awards list (dynamically discovered awards)
+    result["awards"] = awards
+
+    # T018: Implement flat structure transformation (awards as top-level keys)
+    # Each award becomes a top-level key with its data
+    for award_name, data in award_data.items():
+        award_dict = {
+            "presenters": data.get("presenters", []),
+            "nominees": data.get("nominees", []),
+            "winner": data.get("winner", ""),
+        }
+
+        # T019: Implement per-award candidate fields
+        # Add candidate fields if provided
+        if award_candidates and award_name in award_candidates:
+            candidates = award_candidates[award_name]
+            award_dict["presenters_candidates"] = candidates.get("presenters_candidates", [])
+            award_dict["nominee_candidates"] = candidates.get("nominee_candidates", [])
+            award_dict["winner_candidates"] = candidates.get("winner_candidates", [])
+        else:
+            # T023: Edge case handling - provide empty lists if no candidates
+            award_dict["presenters_candidates"] = []
+            award_dict["nominee_candidates"] = []
+            award_dict["winner_candidates"] = []
+
+        result[award_name] = award_dict
+
+    # T020: Implement additional goals candidate fields
     if additional_goals:
-        result["additional_goals"] = additional_goals
+        for goal_name, winner in additional_goals.items():
+            result[goal_name] = winner
+
+            # Add candidate list if provided
+            if additional_goals_candidates and goal_name in additional_goals_candidates:
+                result[f"{goal_name}_candidates"] = additional_goals_candidates[goal_name]
 
     return result
 
@@ -180,9 +338,12 @@ def generate_outputs(
     year: str,
     output_dir: str = ".",
     additional_goals: dict[str, str] | None = None,
+    host_candidates: list[str] | None = None,
+    award_candidates: dict[str, dict[str, list[str]]] | None = None,
+    additional_goals_candidates: dict[str, list[str]] | None = None,
 ) -> tuple[Path, Path]:
     """
-    Generate both JSON and human-readable output files.
+    Generate both JSON and human-readable output files with candidate lists.
 
     Args:
         hosts: List of normalized host names
@@ -191,12 +352,17 @@ def generate_outputs(
         year: Year string (e.g., "2013")
         output_dir: Directory to write output files (default: current directory)
         additional_goals: Optional dict mapping goal names to winners
+        host_candidates: Optional list of top host candidates
+        award_candidates: Optional dict of per-award candidate lists
+        additional_goals_candidates: Optional dict of additional goal candidate lists
 
     Returns:
         Tuple of (json_path, text_path)
     """
-    # Build output structure
-    results = build_json_output(hosts, awards, award_data, additional_goals)
+    # T022: Build output structure with candidates
+    results = build_json_output(
+        hosts, awards, award_data, additional_goals, host_candidates, award_candidates, additional_goals_candidates
+    )
 
     # Write both output files
     json_path = write_json_output(results, year, output_dir)

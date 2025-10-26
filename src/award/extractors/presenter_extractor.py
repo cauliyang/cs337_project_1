@@ -37,6 +37,7 @@ class PresenterExtractor(BaseExtractor):
         self.min_mentions = min_mentions
         self.top_n = top_n
         self.nlp = get_nlp()
+        self.award_presenter_counters: dict[str, Counter] = {}  # Store Counters for candidate extraction
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions presenters."""
@@ -217,6 +218,12 @@ class PresenterExtractor(BaseExtractor):
         award_presenter_candidates, award_tweets_map = self.associate_presenters_with_awards(
             tweets, awards, tweet_awards
         )
+
+        # Store raw Counters before filtering (for candidate extraction)
+        # Convert from list of tuples back to Counter
+        self.award_presenter_counters = {
+            award: Counter(dict(candidates)) for award, candidates in award_presenter_candidates.items()
+        }
 
         # Select top presenters for each award
         presenters = {}

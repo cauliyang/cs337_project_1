@@ -39,6 +39,7 @@ class NomineeExtractor(BaseExtractor):
         self.top_n = top_n
         self.nlp = get_nlp()
         self.entity_validator = EntityTypeValidator()
+        self.award_nominee_counters: dict[str, Counter] = {}  # Store Counters for candidate extraction
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions nominees."""
@@ -238,6 +239,12 @@ class NomineeExtractor(BaseExtractor):
 
         # Associate nominees with awards
         award_nominee_candidates, award_tweets_map = self.associate_nominees_with_awards(tweets, awards, tweet_awards)
+
+        # Store raw Counters before filtering (for candidate extraction)
+        # Convert from list of tuples back to Counter
+        self.award_nominee_counters = {
+            award: Counter(dict(candidates)) for award, candidates in award_nominee_candidates.items()
+        }
 
         # Select top nominees for each award
         nominees = {}

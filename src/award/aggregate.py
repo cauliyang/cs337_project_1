@@ -5,15 +5,16 @@ This module provides various strategies to aggregate multiple candidate names
 and select the most likely final answer based on different criteria.
 """
 
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 from .tweet import Tweet
 
 
 class AggregationStrategy(Enum):
     """Available aggregation strategies."""
+
     MOST_FREQUENT = "most_frequent"
     LONGEST = "longest"
     HIGHEST_RETWEET_COUNT = "highest_retweet_count"
@@ -24,13 +25,14 @@ class AggregationStrategy(Enum):
 @dataclass
 class CandidateScore:
     """Represents a candidate with its score and metadata."""
+
     name: str
     frequency: int
     total_retweets: int
     avg_retweets: float
     max_retweets: int
     length: int
-    tweets: List[Tweet]
+    tweets: list[Tweet]
     weighted_score: float = 0.0
 
 
@@ -42,11 +44,10 @@ class AwardAggregator:
 
     def __init__(self, strategy: AggregationStrategy = AggregationStrategy.COMBINED):
         self.strategy = strategy
-        self.candidates: Dict[str, CandidateScore] = {}
-        self.tweets: List[Tweet] = []
+        self.candidates: dict[str, CandidateScore] = {}
+        self.tweets: list[Tweet] = []
 
-    def add_tweet_data(self, tweet: Tweet, extracted_items: List[str],
-                       item_type: str = "general") -> None:
+    def add_tweet_data(self, tweet: Tweet, extracted_items: list[str], item_type: str = "general") -> None:
         """
         Add extracted data from a tweet to the aggregator.
 
@@ -72,21 +73,18 @@ class AwardAggregator:
                     max_retweets=0,
                     length=len(item),
                     tweets=[],
-                    weighted_score=0.0
+                    weighted_score=0.0,
                 )
 
             # Update candidate statistics
             candidate = self.candidates[item]
             candidate.frequency += 1
             candidate.total_retweets += tweet.retweeted_count
-            candidate.max_retweets = max(candidate.max_retweets,
-                                         tweet.retweeted_count)
+            candidate.max_retweets = max(candidate.max_retweets, tweet.retweeted_count)
             candidate.tweets.append(tweet)
-            candidate.avg_retweets = (candidate.total_retweets /
-                                      candidate.frequency)
+            candidate.avg_retweets = candidate.total_retweets / candidate.frequency
 
-    def get_top_candidates(self, n: int = 5,
-                          min_frequency: int = 1) -> List[CandidateScore]:
+    def get_top_candidates(self, n: int = 5, min_frequency: int = 1) -> list[CandidateScore]:
         """
         Get the top N candidates based on the selected strategy.
 
@@ -99,8 +97,7 @@ class AwardAggregator:
         """
         # Filter candidates by minimum frequency
         filtered_candidates = {
-            name: candidate for name, candidate in self.candidates.items()
-            if candidate.frequency >= min_frequency
+            name: candidate for name, candidate in self.candidates.items() if candidate.frequency >= min_frequency
         }
 
         if not filtered_candidates:
@@ -121,12 +118,10 @@ class AwardAggregator:
             raise ValueError(f"Unknown strategy: {self.strategy}")
 
         # Sort by score and return top N
-        sorted_candidates = sorted(
-            scored_candidates.values(),
-            key=lambda x: x.weighted_score, reverse=True)
+        sorted_candidates = sorted(scored_candidates.values(), key=lambda x: x.weighted_score, reverse=True)
         return sorted_candidates[:n]
 
-    def get_best_candidate(self, min_frequency: int = 1) -> Optional[str]:
+    def get_best_candidate(self, min_frequency: int = 1) -> str | None:
         """
         Get the single best candidate based on the selected strategy.
 
@@ -136,33 +131,28 @@ class AwardAggregator:
         Returns:
             The best candidate name, or None if no valid candidates
         """
-        top_candidates = self.get_top_candidates(n=1,
-                                                min_frequency=min_frequency)
+        top_candidates = self.get_top_candidates(n=1, min_frequency=min_frequency)
         return top_candidates[0].name if top_candidates else None
 
-    def _score_by_frequency(self, candidates: Dict[str, CandidateScore]
-                            ) -> Dict[str, CandidateScore]:
+    def _score_by_frequency(self, candidates: dict[str, CandidateScore]) -> dict[str, CandidateScore]:
         """Score candidates by frequency only."""
         for candidate in candidates.values():
             candidate.weighted_score = candidate.frequency
         return candidates
 
-    def _score_by_length(self, candidates: Dict[str, CandidateScore]
-                         ) -> Dict[str, CandidateScore]:
+    def _score_by_length(self, candidates: dict[str, CandidateScore]) -> dict[str, CandidateScore]:
         """Score candidates by length (longer is better)."""
         for candidate in candidates.values():
             candidate.weighted_score = candidate.length
         return candidates
 
-    def _score_by_retweets(self, candidates: Dict[str, CandidateScore]
-                           ) -> Dict[str, CandidateScore]:
+    def _score_by_retweets(self, candidates: dict[str, CandidateScore]) -> dict[str, CandidateScore]:
         """Score candidates by total retweet count."""
         for candidate in candidates.values():
             candidate.weighted_score = candidate.total_retweets
         return candidates
 
-    def _score_weighted(self, candidates: Dict[str, CandidateScore]
-                        ) -> Dict[str, CandidateScore]:
+    def _score_weighted(self, candidates: dict[str, CandidateScore]) -> dict[str, CandidateScore]:
         """
         Score candidates using a weighted combination of factors:
         - Frequency (40%)
@@ -170,28 +160,20 @@ class AwardAggregator:
         - Length (20%)
         """
         # Normalize scores to 0-1 range
-        max_freq = (max(c.frequency for c in candidates.values())
-                   if candidates else 1)
-        max_retweets = (max(c.total_retweets for c in candidates.values())
-                       if candidates else 1)
-        max_length = (max(c.length for c in candidates.values())
-                     if candidates else 1)
+        max_freq = max(c.frequency for c in candidates.values()) if candidates else 1
+        max_retweets = max(c.total_retweets for c in candidates.values()) if candidates else 1
+        max_length = max(c.length for c in candidates.values()) if candidates else 1
 
         for candidate in candidates.values():
             freq_score = candidate.frequency / max_freq
             retweet_score = candidate.total_retweets / max_retweets
             length_score = candidate.length / max_length
 
-            candidate.weighted_score = (
-                0.4 * freq_score +
-                0.4 * retweet_score +
-                0.2 * length_score
-            )
+            candidate.weighted_score = 0.4 * freq_score + 0.4 * retweet_score + 0.2 * length_score
 
         return candidates
 
-    def _score_combined(self, candidates: Dict[str, CandidateScore]
-                        ) -> Dict[str, CandidateScore]:
+    def _score_combined(self, candidates: dict[str, CandidateScore]) -> dict[str, CandidateScore]:
         """
         Score candidates using a comprehensive combination of factors:
         - Frequency (30%)
@@ -201,16 +183,11 @@ class AwardAggregator:
         - Maximum retweets (10%)
         """
         # Normalize scores to 0-1 range
-        max_freq = (max(c.frequency for c in candidates.values())
-                   if candidates else 1)
-        max_retweets = (max(c.total_retweets for c in candidates.values())
-                       if candidates else 1)
-        max_avg_retweets = (max(c.avg_retweets for c in candidates.values())
-                           if candidates else 1)
-        max_length = (max(c.length for c in candidates.values())
-                     if candidates else 1)
-        max_max_retweets = (max(c.max_retweets for c in candidates.values())
-                           if candidates else 1)
+        max_freq = max(c.frequency for c in candidates.values()) if candidates else 1
+        max_retweets = max(c.total_retweets for c in candidates.values()) if candidates else 1
+        max_avg_retweets = max(c.avg_retweets for c in candidates.values()) if candidates else 1
+        max_length = max(c.length for c in candidates.values()) if candidates else 1
+        max_max_retweets = max(c.max_retweets for c in candidates.values()) if candidates else 1
 
         for candidate in candidates.values():
             freq_score = candidate.frequency / max_freq
@@ -220,28 +197,22 @@ class AwardAggregator:
             max_retweet_score = candidate.max_retweets / max_max_retweets
 
             candidate.weighted_score = (
-                0.3 * freq_score +
-                0.3 * retweet_score +
-                0.2 * avg_retweet_score +
-                0.1 * length_score +
-                0.1 * max_retweet_score
+                0.3 * freq_score
+                + 0.3 * retweet_score
+                + 0.2 * avg_retweet_score
+                + 0.1 * length_score
+                + 0.1 * max_retweet_score
             )
 
         return candidates
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get statistics about the aggregation process."""
         if not self.candidates:
-            return {
-                "total_candidates": 0,
-                "total_tweets": 0,
-                "total_retweets": 0,
-                "avg_candidates_per_tweet": 0
-            }
+            return {"total_candidates": 0, "total_tweets": 0, "total_retweets": 0, "avg_candidates_per_tweet": 0}
 
         total_retweets = sum(tweet.retweeted_count for tweet in self.tweets)
-        avg_candidates_per_tweet = (len(self.candidates) / len(self.tweets)
-                                    if self.tweets else 0)
+        avg_candidates_per_tweet = len(self.candidates) / len(self.tweets) if self.tweets else 0
 
         return {
             "total_candidates": len(self.candidates),
@@ -249,10 +220,7 @@ class AwardAggregator:
             "total_retweets": total_retweets,
             "avg_candidates_per_tweet": avg_candidates_per_tweet,
             "top_candidate": self.get_best_candidate(),
-            "candidate_frequencies": {
-                name: candidate.frequency
-                for name, candidate in self.candidates.items()
-            }
+            "candidate_frequencies": {name: candidate.frequency for name, candidate in self.candidates.items()},
         }
 
     def clear(self) -> None:
@@ -274,11 +242,10 @@ class MultiTypeAggregator:
             "nominees": AwardAggregator(strategy),
             "winners": AwardAggregator(strategy),
             "presenters": AwardAggregator(strategy),
-            "hosts": AwardAggregator(strategy)
+            "hosts": AwardAggregator(strategy),
         }
 
-    def add_tweet_data(self, tweet: Tweet,
-                       extracted_data: Dict[str, List[str]]) -> None:
+    def add_tweet_data(self, tweet: Tweet, extracted_data: dict[str, list[str]]) -> None:
         """
         Add extracted data from a tweet to the appropriate aggregators.
 
@@ -289,10 +256,9 @@ class MultiTypeAggregator:
         """
         for item_type, items in extracted_data.items():
             if item_type in self.aggregators:
-                self.aggregators[item_type].add_tweet_data(tweet, items,
-                                                          item_type)
+                self.aggregators[item_type].add_tweet_data(tweet, items, item_type)
 
-    def get_results(self, min_frequency: int = 1) -> Dict[str, List[str]]:
+    def get_results(self, min_frequency: int = 1) -> dict[str, list[str]]:
         """
         Get the best candidates for each type.
 
@@ -304,15 +270,12 @@ class MultiTypeAggregator:
         """
         results = {}
         for item_type, aggregator in self.aggregators.items():
-            top_candidates = aggregator.get_top_candidates(
-                n=10, min_frequency=min_frequency)
-            results[item_type] = [candidate.name
-                                 for candidate in top_candidates]
+            top_candidates = aggregator.get_top_candidates(n=10, min_frequency=min_frequency)
+            results[item_type] = [candidate.name for candidate in top_candidates]
 
         return results
 
-    def get_single_results(self, min_frequency: int = 1
-                          ) -> Dict[str, Optional[str]]:
+    def get_single_results(self, min_frequency: int = 1) -> dict[str, str | None]:
         """
         Get the single best candidate for each type.
 
@@ -324,14 +287,10 @@ class MultiTypeAggregator:
         """
         results = {}
         for item_type, aggregator in self.aggregators.items():
-            results[item_type] = aggregator.get_best_candidate(
-                min_frequency=min_frequency)
+            results[item_type] = aggregator.get_best_candidate(min_frequency=min_frequency)
 
         return results
 
-    def get_statistics(self) -> Dict[str, Dict[str, Any]]:
+    def get_statistics(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all aggregators."""
-        return {
-            item_type: aggregator.get_statistics()
-            for item_type, aggregator in self.aggregators.items()
-        }
+        return {item_type: aggregator.get_statistics() for item_type, aggregator in self.aggregators.items()}

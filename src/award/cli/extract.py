@@ -1,5 +1,6 @@
 """summary and extract award information from tweets after pre-processing"""
 
+from collections import Counter
 from pathlib import Path
 
 from award.processor import ProcessorPipeline
@@ -267,21 +268,72 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
         traceback.print_exc()
         additional_goals = {}
 
-    # Step 10: Generate outputs
+    # Step 10: Extract candidate lists from Counters
     print("\n" + "-" * 60)
-    print("PHASE 8: Output Generation")
+    print("PHASE 8: Candidate Extraction")
+    print("-" * 60)
+
+    try:
+        from award.write import get_top_candidates
+
+        # Extract host candidates (top 10)
+        host_candidates = get_top_candidates(host_extractor.person_counts, max_size=10) if hosts else []
+        print(f"✓ Extracted {len(host_candidates)} host candidates")
+
+        # Extract award candidates for each award
+        award_candidates = {}
+        for award in template_awards:
+            # Get Counters from extractors
+            winner_counter = winner_extractor.award_winner_counters.get(award, Counter())
+            nominee_counter = nominee_extractor.award_nominee_counters.get(award, Counter())
+            presenter_counter = presenter_extractor.award_presenter_counters.get(award, Counter())
+
+            award_candidates[award] = {
+                "winner_candidates": get_top_candidates(winner_counter, max_size=10),
+                "nominee_candidates": get_top_candidates(nominee_counter, max_size=20),
+                "presenters_candidates": get_top_candidates(presenter_counter, max_size=10),
+            }
+
+        print(f"✓ Extracted candidates for {len(award_candidates)} awards")
+
+        # Extract additional goals candidates (top 5 for each goal)
+        additional_goals_candidates = {}
+        if additional_goals:
+            for goal_key in additional_extractor.goal_counters.keys():
+                goal_counter = additional_extractor.goal_counters[goal_key]
+                additional_goals_candidates[goal_key] = get_top_candidates(goal_counter, max_size=5)
+
+        print(f"✓ Extracted candidates for {len(additional_goals_candidates)} additional goals")
+
+    except Exception as e:
+        print(f"✗ Error extracting candidates: {e}")
+        import traceback
+
+        traceback.print_exc()
+        # Continue with empty candidates
+        host_candidates = []
+        award_candidates = {}
+        additional_goals_candidates = {}
+
+    # Step 11: Generate outputs
+    print("\n" + "-" * 60)
+    print("PHASE 9: Output Generation")
     print("-" * 60)
 
     try:
         from award.write import generate_outputs
 
-        # Output: discovered_awards for "awards" field, template awards for award_data
+        # Output: Use discovered_awards for "awards" field, but award_data uses template_awards
+        # The "awards" list shows what we discovered, award_data contains all 26 template awards
         json_path, text_path = generate_outputs(
             hosts=hosts,
             awards=discovered_awards,  # Use discovered awards for the awards list
-            award_data=award_data,  # Use template-based award_data
+            award_data=award_data,  # Use template-based award_data (all 26 awards)
             year=year,
             additional_goals=additional_goals,  # Add fun categories
+            host_candidates=host_candidates,  # Add host candidates
+            award_candidates=award_candidates,  # Add award candidates
+            additional_goals_candidates=additional_goals_candidates,  # Add additional goal candidates
         )
 
         print(f"✓ JSON output: {json_path}")
