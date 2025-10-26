@@ -238,6 +238,11 @@ def pre_ceremony():
         zip_file = Path("data/gg2013.json.zip")
         if zip_file.exists():
             print(f"✓ Tweet data found (compressed): {zip_file}")
+            print("Extracting zip file...")
+            import zipfile
+            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+                zip_ref.extractall("data/")
+            print(f"✓ Extracted to {tweet_file}")
         else:
             print(f"✗ Tweet data not found: {tweet_file}")
             return

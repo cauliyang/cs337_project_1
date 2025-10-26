@@ -1,0 +1,26 @@
+{
+  "total_tweets": 100,
+  "tweets_with_awards": 3,
+  "tweets_with_winners": 11,
+  "tweets_with_nominees": 1,
+  "tweets_with_hosts": 0,
+  "tweets_with_presenters": 0,
+  "tweets_with_quotes": 0,
+  "tweets_with_fashion": 3,
+  "total_awards": 5,
+  "total_winners": 11,
+  "total_nominees": 1,
+  "total_hosts": 0,
+  "total_presenters": 0,
+  "total_quotes": 0,
+  "total_fashion_items": 5,
+  "extraction_rates": {
+    "awards": 3.0,
+    "winners": 11.0,
+    "nominees": 1.0,
+    "hosts": 0.0,
+    "presenters": 0.0,
+    "quotes": 0.0,
+    "fashion": 3.0
+  }
+}

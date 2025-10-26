@@ -165,9 +165,10 @@ class AwardAggregator:
         max_length = max(c.length for c in candidates.values()) if candidates else 1
 
         for candidate in candidates.values():
-            freq_score = candidate.frequency / max_freq
-            retweet_score = candidate.total_retweets / max_retweets
-            length_score = candidate.length / max_length
+            # Avoid division by zero
+            freq_score = candidate.frequency / max_freq if max_freq > 0 else 0
+            retweet_score = candidate.total_retweets / max_retweets if max_retweets > 0 else 0
+            length_score = candidate.length / max_length if max_length > 0 else 0
 
             candidate.weighted_score = 0.4 * freq_score + 0.4 * retweet_score + 0.2 * length_score
 
@@ -190,11 +191,12 @@ class AwardAggregator:
         max_max_retweets = max(c.max_retweets for c in candidates.values()) if candidates else 1
 
         for candidate in candidates.values():
-            freq_score = candidate.frequency / max_freq
-            retweet_score = candidate.total_retweets / max_retweets
-            avg_retweet_score = candidate.avg_retweets / max_avg_retweets
-            length_score = candidate.length / max_length
-            max_retweet_score = candidate.max_retweets / max_max_retweets
+            # Avoid division by zero
+            freq_score = candidate.frequency / max_freq if max_freq > 0 else 0
+            retweet_score = candidate.total_retweets / max_retweets if max_retweets > 0 else 0
+            avg_retweet_score = candidate.avg_retweets / max_avg_retweets if max_avg_retweets > 0 else 0
+            length_score = candidate.length / max_length if max_length > 0 else 0
+            max_retweet_score = candidate.max_retweets / max_max_retweets if max_max_retweets > 0 else 0
 
             candidate.weighted_score = (
                 0.3 * freq_score

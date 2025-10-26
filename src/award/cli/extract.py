@@ -10,7 +10,13 @@ from award.extractors.nominee_extractor import NomineeExtractor
 from award.extractors.presenter_extractor import PresenterExtractor
 from award.extractors.winner_extractor import WinnerExtractor
 from award.processor import ProcessorPipeline
-from award.processors.cleaner import FtfyCleaner, UnidecodeCleaner, UrlCleaner, WhitespaceCollapseCleaner
+from award.processors.cleaner import (
+    FtfyCleaner,
+    UnidecodeCleaner,
+    UrlCleaner,
+    WhitespaceCollapseCleaner,
+    normalize_text,
+)
 from award.processors.filter import EmptyTextFilter, GroupTweetsFilter, KeywordFilter
 from award.read import TweetReader
 from award.tweet import TweetListAdapter
@@ -134,6 +140,31 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
     print(f"✓ Using {len(template_awards)} hardcoded template awards for extraction")
     print("   (Templates ensure accurate winner/nominee/presenter extraction)")
     print(f"  (POS-discovered awards: {len(discovered_awards)} will be used for 'awards' field)")
+    
+    # Create mapping from template awards to discovered variants
+    # This allows matching using both template names AND discovered variants
+    award_variants_map = {}
+    
+    for template_award in template_awards:
+        template_words = set(normalize_text(template_award).split())
+        matching_discovered = []
+        
+        for discovered_award in discovered_awards:
+            discovered_words = set(normalize_text(discovered_award).split())
+            overlap = len(template_words & discovered_words)
+            overlap_ratio = overlap / len(template_words) if template_words else 0
+            
+            if overlap_ratio >= 0.7:
+                matching_discovered.append(discovered_award)
+        
+        variants = (
+            [normalize_text(template_award)] + 
+            [normalize_text(v) for v in matching_discovered]
+        )
+        award_variants_map[template_award] = list(set(variants))
+        
+        if len(variants) > 1:
+            print(f"  {template_award}: {len(variants)} variants")
 
     # Step 5: Extract winners (using template awards to avoid cascade errors)
     print("\n" + "-" * 60)
@@ -162,14 +193,18 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
     print("PHASE 4: Nominee Extraction")
     print("-" * 60)
 
-    nominee_extractor = NomineeExtractor(min_mentions=3, top_n=5)
-    # Use only nominee-related tweets for efficiency
-    nominee_tweets = grouped_tweets.get("nominee", [])
-    print(f"Using {len(nominee_tweets)} nominee-related tweets")
+        nominee_extractor = NomineeExtractor(min_mentions=3, top_n=5)
+        # Use nominee tweets AND win tweets for better coverage
+        nominee_tweets = grouped_tweets.get("nominee", [])
+        win_tweets = grouped_tweets.get("win", [])
+        combined_tweets = nominee_tweets + win_tweets[:1000]  # Limit win tweets
+        print(f"Using {len(combined_tweets)} tweets for nominee extraction ({len(nominee_tweets)} nominee-related, {len(win_tweets)} win-related)")
 
-    # Pass POS-detected award mentions and winners
-    tweet_awards = group_filter.tweet_awards
-    nominees = nominee_extractor.extract(nominee_tweets, template_awards, winners, tweet_awards)
+        # Pass POS-detected award mentions and winners
+        tweet_awards = group_filter.tweet_awards
+        
+        # Extract nominees using the regular extract method
+        nominees = nominee_extractor.extract(combined_tweets, template_awards, winners, tweet_awards)
 
     # Count how many awards have nominees
     nominees_found = sum(1 for n in nominees.values() if n)

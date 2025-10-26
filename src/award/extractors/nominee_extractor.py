@@ -213,6 +213,79 @@ class NomineeExtractor(BaseExtractor):
 
         return nominees
 
+    def extract_candidates(
+        self,
+        tweets: list[Tweet],
+        awards: list[str],
+        winners: dict[str, str],
+        tweet_awards: dict[int, list[str]] | None = None,
+    ) -> dict[str, list[dict]]:
+        """
+        Extract nominee candidates with metadata for aggregation.
+
+        Args:
+            tweets: List of nominee-related tweets
+            awards: List of normalized template award names
+            winners: Dictionary mapping award -> winner name
+            tweet_awards: Optional POS-detected award mentions
+
+        Returns:
+            Dictionary mapping award name -> list of candidate dicts
+            Each candidate dict contains:
+                - name: Nominee name
+                - count: Mention count
+                - tweets: List of tweets mentioning this nominee
+        """
+        if tweet_awards:
+            print(f"Using POS-detected awards from {len(tweet_awards)} tweets")
+
+        # Associate nominees with awards
+        award_nominee_candidates, award_tweets_map = self.associate_nominees_with_awards(tweets, awards, tweet_awards)
+
+        # Build candidate dictionaries with metadata
+        candidates_dict = {}
+        
+        for award in awards:
+            candidates = award_nominee_candidates.get(award, [])
+            award_tweets = award_tweets_map.get(award, [])
+            winner = winners.get(award, "")
+            
+            # Build candidate list with metadata
+            candidate_list = []
+            for nominee_name, count in candidates:
+                # Skip if this is the winner
+                winner_normalized = normalize_text(winner) if winner else ""
+                if winner_normalized and normalize_text(nominee_name) == winner_normalized:
+                    continue
+                
+                # Find tweets mentioning this nominee
+                nominee_tweets = [
+                    tweet for tweet in award_tweets 
+                    if nominee_name.lower() in normalize_text(tweet.text).lower()
+                ]
+                
+                candidate_list.append({
+                    "name": nominee_name,
+                    "count": count,
+                    "tweets": nominee_tweets,
+                })
+            
+            # Add winner as candidate if not present
+            if winner and winner not in [c["name"] for c in candidate_list]:
+                winner_tweets = [
+                    tweet for tweet in award_tweets
+                    if winner.lower() in normalize_text(tweet.text).lower()
+                ]
+                candidate_list.append({
+                    "name": winner,
+                    "count": self.min_mentions + 1,
+                    "tweets": winner_tweets,
+                })
+            
+            candidates_dict[award] = candidate_list
+
+        return candidates_dict
+
     def extract(
         self,
         tweets: list[Tweet],
