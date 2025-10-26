@@ -5,8 +5,11 @@ lint:
 type:
 	uvx ty check
 
-autograder:
+autograder: result
 	uv run autograder.py
+
+result:
+	uv run gg_api.py
 
 test:
 	uv run pytest -vls
