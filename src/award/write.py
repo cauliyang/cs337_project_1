@@ -40,8 +40,6 @@ def write_json_output(results: dict, year: str, output_dir: str = ".") -> Path:
     """
     Write extraction results to JSON file in autograder-compatible format.
 
-    T021: Updated to handle new flat structure with awards as top-level keys.
-
     Args:
         results: Dictionary with flat structure (awards as top-level keys)
                  Required keys: 'host', 'host_candidates', 'awards'
@@ -120,7 +118,8 @@ def write_text_output(results: dict, year: str, output_dir: str = ".") -> Path:
     lines.append("-" * 60)
     host = results.get("host", "")
     if host:
-        lines.append(f"{host.title()}")
+        for host_name in host:
+            lines.append(f"{host_name.title()}")
     else:
         lines.append("(No host extracted)")
 
@@ -287,15 +286,13 @@ def build_json_output(
     # Initialize result with required top-level fields
     result = {}
 
-    # T017: Implement host and host_candidates field generation
     # Singular "host" field (first host if multiple, empty string if none)
-    result["host"] = hosts[0] if hosts else ""
+    result["host"] = hosts if hosts else ""
     result["host_candidates"] = host_candidates if host_candidates is not None else []
 
     # Awards list (dynamically discovered awards)
     result["awards"] = awards
 
-    # T018: Implement flat structure transformation (awards as top-level keys)
     # Each award becomes a top-level key with its data
     for award_name, data in award_data.items():
         award_dict = {
@@ -304,7 +301,6 @@ def build_json_output(
             "winner": data.get("winner", ""),
         }
 
-        # T019: Implement per-award candidate fields
         # Add candidate fields if provided
         if award_candidates and award_name in award_candidates:
             candidates = award_candidates[award_name]
@@ -312,14 +308,12 @@ def build_json_output(
             award_dict["nominee_candidates"] = candidates.get("nominee_candidates", [])
             award_dict["winner_candidates"] = candidates.get("winner_candidates", [])
         else:
-            # T023: Edge case handling - provide empty lists if no candidates
             award_dict["presenters_candidates"] = []
             award_dict["nominee_candidates"] = []
             award_dict["winner_candidates"] = []
 
         result[award_name] = award_dict
 
-    # T020: Implement additional goals candidate fields
     if additional_goals:
         for goal_name, winner in additional_goals.items():
             result[goal_name] = winner
@@ -359,7 +353,6 @@ def generate_outputs(
     Returns:
         Tuple of (json_path, text_path)
     """
-    # T022: Build output structure with candidates
     results = build_json_output(
         hosts, awards, award_data, additional_goals, host_candidates, award_candidates, additional_goals_candidates
     )

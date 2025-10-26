@@ -231,20 +231,7 @@ def pre_ceremony():
         - This function should handle all one-time setup tasks
         - Print progress messages to help with debugging
     """
-    # Verify tweet data exists
-    tweet_file = Path("data/gg2013.json")
-    if not tweet_file.exists():
-        # Check for zip file
-        zip_file = Path("data/gg2013.json.zip")
-        if zip_file.exists():
-            print(f"✓ Tweet data found (compressed): {zip_file}")
-        else:
-            print(f"✗ Tweet data not found: {tweet_file}")
-            return
-    else:
-        print(f"✓ Tweet data found: {tweet_file}")
     return
-
 
 def main():
     """Main function that orchestrates the Golden Globes analysis.
@@ -275,7 +262,7 @@ def main():
 
     # Step 2: Load and group tweets
     print("\nLoading and grouping tweets...")
-    extract.main(input_file=Path("data/gg2013.json"), year=YEAR)
+    extract.main(input_file=Path("data/gg2013.json.zip"), year=YEAR)
 
     return
 
