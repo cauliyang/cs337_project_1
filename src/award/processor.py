@@ -5,7 +5,6 @@ from functools import singledispatchmethod
 from typing import Any
 
 from rich import print
-from langdetect import detect, LangDetectException
 
 from .tweet import Tweet
 
@@ -147,22 +146,30 @@ class ProcessorPipeline:
     def __repr__(self) -> str:
         return f"ProcessorPipeline({len(self.processors)} processors)"
 
+    def __add__(self, other: "ProcessorPipeline") -> "ProcessorPipeline":
+        """Combine two pipelines into a new one."""
+        return type(self)(self.processors + other.processors)
+
 
 class LoggingPipeline(ProcessorPipeline):
     """Pipeline with detailed logging of each processing step."""
 
     def apply(self, data: str | Tweet) -> str | Tweet | None:
         result = data
+        import time
+
         print(f"\nBefore: {data}")
         for i, processor in enumerate(self.processors):
             print(f" Step {i}: {processor}")
+            start = time.time()
 
             if isinstance(processor, BaseFilter):
                 # Filters return bool - check the result
                 passed = processor.process(result)
                 print(f"   → Filter result: {passed}")
                 if not passed:
-                    print(f"   → Filtered out by {processor}")
+                    end = time.time()
+                    print(f"   → Filtered out by {processor} took {end - start:.4f} seconds")
                     return None
                 # Keep the current result (don't replace with bool)
             elif isinstance(processor, BaseCleaner):
@@ -176,23 +183,8 @@ class LoggingPipeline(ProcessorPipeline):
                 # Generic processor
                 result = processor.process(result)
 
+            end = time.time()
+            print(f"   → Processing took {end - start:.4f} seconds")
+
         print(f"After: {result}")
         return result
-
-
-class LanguageFilter(BaseFilter):
-    """Filter tweets by detected language using langdetect."""
-
-    def __init__(self, allowed_languages: list[str] = ["en"]):
-        super().__init__(processor_type="filter")
-        self.allowed_languages = allowed_languages
-
-    def filter_tweet(self, tweet: Tweet) -> bool:
-        text = getattr(tweet, "text", "").strip()
-        if not text:
-            return False
-        try:
-            detected = detect(text)
-            return detected in self.allowed_languages
-        except LangDetectException:
-            return False

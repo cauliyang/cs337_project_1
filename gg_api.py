@@ -1,20 +1,80 @@
 """Version 0.5"""
 
+import json
+from pathlib import Path
+from typing import Any
+
+from rich import print
+
+from award.cli import extract
+
 # Year of the Golden Globes ceremony being analyzed
 YEAR = "2013"
 
-# Global variable for hardcoded award names
-# This list is used by get_nominees(), get_winner(), and get_presenters() functions
-# as the keys for their returned dictionaries
-# Students should populate this list with the actual award categories for their year, to avoid cascading errors on outputs that depend on correctly extracting award names (e.g., nominees, presenters, winner)
+# Global variable for template award names (hardcoded to avoid cascading errors)
+# These are the official Golden Globes 2013 award categories
+# Used for extracting winners, nominees, and presenters
 AWARD_NAMES = [
-    "best motion picture - drama",
+    "best screenplay - motion picture",
+    "best director - motion picture",
+    "best performance by an actress in a television series - comedy or musical",
+    "best foreign language film",
+    "best performance by an actor in a supporting role in a motion picture",
+    "best performance by an actress in a supporting role in a series, mini-series or motion picture made for television",
     "best motion picture - comedy or musical",
+    "best performance by an actress in a motion picture - comedy or musical",
+    "best mini-series or motion picture made for television",
+    "best original score - motion picture",
+    "best performance by an actress in a television series - drama",
+    "best performance by an actress in a motion picture - drama",
+    "cecil b. demille award",
+    "best performance by an actor in a motion picture - comedy or musical",
+    "best motion picture - drama",
+    "best performance by an actor in a supporting role in a series, mini-series or motion picture made for television",
+    "best performance by an actress in a supporting role in a motion picture",
+    "best television series - drama",
+    "best performance by an actor in a mini-series or motion picture made for television",
+    "best performance by an actress in a mini-series or motion picture made for television",
+    "best animated feature film",
+    "best original song - motion picture",
     "best performance by an actor in a motion picture - drama",
-    # Add or modify categories as needed for your year
-    "your custom award category",
-    # ... etc
+    "best television series - comedy or musical",
+    "best performance by an actor in a television series - drama",
+    "best performance by an actor in a television series - comedy or musical",
 ]
+
+# Module-level cache for JSON results
+_RESULTS_CACHE: dict[str, Any] = {}
+
+
+def _load_results(year: str) -> dict:
+    """
+    Load results from JSON file with caching.
+
+    Args:
+        year: Year string (e.g., "2013")
+
+    Returns:
+        Dictionary with extraction results
+
+    Raises:
+        FileNotFoundError: If results file doesn't exist
+        json.JSONDecodeError: If file is not valid JSON
+    """
+    if year in _RESULTS_CACHE:
+        return _RESULTS_CACHE[year]
+
+    results_file = Path(f"gg{year}_results.json")
+    if not results_file.exists():
+        raise FileNotFoundError(
+            f"Results file gg{year}_results.json not found. Please run main() first to generate results."
+        )
+
+    with open(results_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    _RESULTS_CACHE[year] = data
+    return data
 
 
 def get_hosts(year):
@@ -31,8 +91,8 @@ def get_hosts(year):
         - Do NOT change the name of this function or what it returns
         - The function should return a list even if there's only one host
     """
-    # Your code here
-    return hosts
+    data = _load_results(year)
+    return data["hosts"]
 
 
 def get_awards(year):
@@ -51,8 +111,8 @@ def get_awards(year):
         - Award names should be extracted from tweets, not hardcoded
         - The only hardcoded part allowed is the word "Best"
     """
-    # Your code here
-    return awards
+    data = _load_results(year)
+    return data["awards"]
 
 
 def get_nominees(year):
@@ -86,8 +146,8 @@ def get_nominees(year):
         - Use the hardcoded award names as keys (from the global AWARD_NAMES list)
         - Each value should be a list of strings, even if there's only one nominee
     """
-    # Your code here
-    return nominees
+    data = _load_results(year)
+    return {award: data["award_data"][award]["nominees"] for award in data["award_data"]}
 
 
 def get_winner(year):
@@ -110,8 +170,8 @@ def get_winner(year):
         - Use the hardcoded award names as keys (from the global AWARD_NAMES list)
         - Each value should be a single string (the winner's name)
     """
-    # Your code here
-    return winners
+    data = _load_results(year)
+    return {award: data["award_data"][award]["winner"] for award in data["award_data"]}
 
 
 def get_presenters(year):
@@ -134,8 +194,8 @@ def get_presenters(year):
         - Use the hardcoded award names as keys (from the global AWARD_NAMES list)
         - Each value should be a list of strings, even if there's only one presenter
     """
-    # Your code here
-    return presenters
+    data = _load_results(year)
+    return {award: data["award_data"][award]["presenters"] for award in data["award_data"]}
 
 
 def pre_ceremony():
@@ -154,8 +214,18 @@ def pre_ceremony():
         - This function should handle all one-time setup tasks
         - Print progress messages to help with debugging
     """
-    # Your code here
-    print("Pre-ceremony processing complete.")
+    # Verify tweet data exists
+    tweet_file = Path("data/gg2013.json")
+    if not tweet_file.exists():
+        # Check for zip file
+        zip_file = Path("data/gg2013.json.zip")
+        if zip_file.exists():
+            print(f"✓ Tweet data found (compressed): {zip_file}")
+        else:
+            print(f"✗ Tweet data not found: {tweet_file}")
+            return
+    else:
+        print(f"✓ Tweet data found: {tweet_file}")
     return
 
 
@@ -179,7 +249,17 @@ def main():
         - This function should coordinate all the analysis steps
         - Make sure to handle errors gracefully
     """
-    # Your code here
+    print("\n" + "=" * 60)
+    print("Golden Globes 2013 - Extraction Pipeline")
+    print("=" * 60)
+
+    # Step 1: Pre-ceremony setup
+    pre_ceremony()
+
+    # Step 2: Load and group tweets
+    print("\nLoading and grouping tweets...")
+    extract.main(input_file=Path("data/gg2013.json"), year=YEAR)
+
     return
 
 

@@ -39,13 +39,14 @@ class LMAwardGenerator(BaseProcessor):
 
         return Award(**answers)
 
+
 class LLMAwardGenerator(BaseProcessor):
     """Generate an award from a tweet using a LLM."""
 
     def __init__(self, model_name: str = "deepset/roberta-base-squad2"):
         super().__init__(processor_type="LLM award generator")
         self.model_name = model_name
-    
+
     def process(self, tweet: Tweet) -> Award:
         """Generate an award from a tweet using a LLM."""
         raise NotImplementedError("Not implemented")

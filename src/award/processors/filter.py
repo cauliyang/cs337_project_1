@@ -1,7 +1,13 @@
+import re
+from collections import defaultdict
+
 import langdetect
+import nltk
+from nltk import RegexpParser, pos_tag, word_tokenize
 
 from award.processor import BaseFilter
 from award.tweet import Tweet
+from award.utils import load_nltk_data
 
 
 # FILTERS (returns bool for pass/fail)
@@ -43,7 +49,7 @@ class RetweetFilter(BaseFilter):
 
     def filter_tweet(self, tweet: Tweet) -> bool:
         """Filter based on retweet count."""
-        return tweet.retweet_count >= self.min_retweets
+        return tweet.retweeted_count >= self.min_retweets
 
 
 class MinLengthFilter(BaseFilter):
@@ -61,12 +67,99 @@ class KeywordFilter(BaseFilter):
     """Filter text containing specific keywords."""
 
     def __init__(self, keywords: list[str], case_sensitive: bool = False):
-        super().__init__(processor_type=f"keywords={len(keywords)}")
+        super().__init__(processor_type=f"keywords({len(keywords)})={keywords}")
         self.keywords = keywords
         self.case_sensitive = case_sensitive
 
     def filter_text(self, text: str) -> bool:
-        """Return True if text contains any keyword."""
+        """Return False if text contains any keyword."""
         search_text = text if self.case_sensitive else text.lower()
         search_keywords = self.keywords if self.case_sensitive else [k.lower() for k in self.keywords]
-        return any(keyword in search_text for keyword in search_keywords)
+        return not any(keyword in search_text for keyword in search_keywords)
+
+
+class GroupTweetsFilter(BaseFilter):
+    """Filter and Group tweets with POS-based award detection"""
+
+    _win_pattern = re.compile(r"\bwin(s|ning|ner|ners)?|won\b", re.IGNORECASE)
+    _host_pattern = re.compile(r"\bhost(s|ed|ing)?\b", re.IGNORECASE)
+    _presenter_pattern = re.compile(r"\bpresent(s|ed|ing|er|ers)?\b", re.IGNORECASE)
+    _nominee_pattern = re.compile(r"\bnominat(e|es|ed|ing|ion|ions)|nominee(s)?\b", re.IGNORECASE)
+    _cecil_pattern = re.compile(r"\bcecil\s+b\.?\s+demille\s+award\b", re.IGNORECASE)
+
+    # POS-based grammar for award extraction
+    # Pattern: Best (RBS/JJS) + optional adjectives/nouns + prepositions + more modifiers
+    AWARD_GRAMMAR = r"""
+        AWARD: {<RBS|JJS><VBG>?<JJ.*>*<NN.*>+<IN>?<DT>?<JJ.*>*<NN.*>*<IN>?<DT>?<JJ.*>*<NN.*>*}
+    """
+
+    def __init__(self):
+        super().__init__(processor_type="filter and group by info")
+        self.groups: dict[str, list[Tweet]] = defaultdict(list)
+        self.tweet_awards: dict[int, list[str]] = {}  # tweet_id -> [award_names]
+
+        load_nltk_data()
+
+        # Initialize chunk parser
+        self.chunk_parser = RegexpParser(self.AWARD_GRAMMAR)
+
+    def extract_award_mentions(self, text: str) -> list[str]:
+        """
+        Extract award mentions from tweet text using POS tagging and chunking.
+
+        Args:
+            text: Tweet text
+
+        Returns:
+            List of award phrases found in the tweet
+        """
+        awards = []
+
+        # Special case: Cecil B. DeMille Award (preserve periods)
+        if self._cecil_pattern.search(text):
+            awards.append("cecil b. demille award")
+
+        try:
+            # Tokenize and POS tag
+            tokens = word_tokenize(text.lower())
+            pos_tagged = pos_tag(tokens)
+
+            # Parse with chunk grammar
+            tree = self.chunk_parser.parse(pos_tagged)
+
+            # Extract AWARD chunks
+            for subtree in tree:
+                if isinstance(subtree, nltk.Tree) and subtree.label() == "AWARD":
+                    # Extract words from the chunk
+                    award_words = [word for word, tag in subtree.leaves()]
+                    award_phrase = " ".join(award_words)
+
+                    # Filter: must contain "best" and be reasonable length
+                    if award_phrase and "best" in award_phrase and 10 < len(award_phrase) < 100:
+                        awards.append(award_phrase)
+
+        except Exception:
+            # If POS tagging fails, fall back to simple pattern
+            pass
+
+        return awards
+
+    def filter_tweet(self, tweet: Tweet) -> bool:
+        """Filter and group tweets, extracting award mentions for winner tweets."""
+        if re.search(self._win_pattern, tweet.text):
+            self.groups["win"].append(tweet)
+            # Extract award mentions using POS tagging for better matching
+            award_mentions = self.extract_award_mentions(tweet.text)
+            if award_mentions:
+                self.tweet_awards[tweet.id] = award_mentions
+            return True
+        elif re.search(self._host_pattern, tweet.text):
+            self.groups["host"].append(tweet)
+            return True
+        elif re.search(self._presenter_pattern, tweet.text):
+            self.groups["presenter"].append(tweet)
+            return True
+        elif re.search(self._nominee_pattern, tweet.text):
+            self.groups["nominee"].append(tweet)
+            return True
+        return False

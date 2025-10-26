@@ -6,7 +6,7 @@ __all__ = [
     "aggregate",
     "processor",
     "processors",
-    "extract",
+    "read",
     "tweet",
     "utils",
     "write",

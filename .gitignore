@@ -207,4 +207,12 @@ poetry.toml
 pyrightconfig.json
 
 gg2013.json
+
+# Project-specific patterns
+cache/
+gg*_results.json
+gg*_results.txt
+preprocessed_tweets.json
+*.log
+
 # End of https://www.toptal.com/developers/gitignore/api/python,macos
