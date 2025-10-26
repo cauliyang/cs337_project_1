@@ -20,32 +20,32 @@ from award.write import generate_outputs, get_top_candidates
 # These are the official Golden Globes 2013 award categories
 # Used for extracting winners, nominees, and presenters
 AWARD_NAMES = [
-    "best screenplay - motion picture",
-    "best director - motion picture",
-    "best performance by an actress in a television series - comedy or musical",
-    "best foreign language film",
-    "best performance by an actor in a supporting role in a motion picture",
-    "best performance by an actress in a supporting role in a series, mini-series or motion picture made for television",  # noqa: E501
-    "best motion picture - comedy or musical",
-    "best performance by an actress in a motion picture - comedy or musical",
-    "best mini-series or motion picture made for television",
-    "best original score - motion picture",
-    "best performance by an actress in a television series - drama",
-    "best performance by an actress in a motion picture - drama",
-    "cecil b. demille award",
-    "best performance by an actor in a motion picture - comedy or musical",
-    "best motion picture - drama",
-    "best performance by an actor in a supporting role in a series, mini-series or motion picture made for television",
-    "best performance by an actress in a supporting role in a motion picture",
-    "best television series - drama",
-    "best performance by an actor in a mini-series or motion picture made for television",
-    "best performance by an actress in a mini-series or motion picture made for television",
     "best animated feature film",
+    "best director - motion picture",
+    "best foreign language film",
+    "best mini-series or motion picture made for television",
+    "best motion picture - comedy or musical",
+    "best motion picture - drama",
+    "best original score - motion picture",
     "best original song - motion picture",
+    "best performance by an actor in a mini-series or motion picture made for television",
+    "best performance by an actor in a motion picture - comedy or musical",
     "best performance by an actor in a motion picture - drama",
-    "best television series - comedy or musical",
-    "best performance by an actor in a television series - drama",
+    "best performance by an actor in a supporting role in a motion picture",
+    "best performance by an actor in a supporting role in a series, mini-series or motion picture made for television",
     "best performance by an actor in a television series - comedy or musical",
+    "best performance by an actor in a television series - drama",
+    "best performance by an actress in a mini-series or motion picture made for television",
+    "best performance by an actress in a motion picture - comedy or musical",
+    "best performance by an actress in a motion picture - drama",
+    "best performance by an actress in a supporting role in a motion picture",
+    "best performance by an actress in a supporting role in a series, mini-series or motion picture made for television",  # noqa: E501
+    "best performance by an actress in a television series - comedy or musical",
+    "best performance by an actress in a television series - drama",
+    "best screenplay - motion picture",
+    "best television series - comedy or musical",
+    "best television series - drama",
+    "cecil b. demille award",
 ]
 
 
@@ -162,7 +162,7 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
     print("PHASE 4: Nominee Extraction")
     print("-" * 60)
 
-    nominee_extractor = NomineeExtractor(min_mentions=3, top_n=5)
+    nominee_extractor = NomineeExtractor(min_mentions=1, top_n=5)
     # Use only nominee-related tweets for efficiency
     nominee_tweets = grouped_tweets.get("nominee", [])
     print(f"Using {len(nominee_tweets)} nominee-related tweets")
@@ -180,7 +180,7 @@ def main(input_file: Path, year: str, *, save_grouped_tweets: bool = False):
     print("PHASE 5: Presenter Extraction")
     print("-" * 60)
 
-    presenter_extractor = PresenterExtractor(min_mentions=3, top_n=2)
+    presenter_extractor = PresenterExtractor(min_mentions=1, top_n=2)
     # Use only presenter-related tweets for efficiency
     presenter_tweets = grouped_tweets.get("presenter", [])
     print(f"Using {len(presenter_tweets)} presenter-related tweets")

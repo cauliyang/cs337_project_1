@@ -119,10 +119,8 @@ class EntityTypeValidator:
 
         # Motion picture awards (movies)
         if "motion picture" in award_lower and "performance" not in award_lower:
-            # Check if it's a technical award (person) or picture award (movie)
-            if any(word in award_lower for word in ["screenplay", "score"]):
-                # These can be either - screenplay/score titles or writer/composer names
-                return "unknown"  # Ambiguous
+            # All motion picture awards expect movie titles as nominees/winners
+            # (even for screenplay, score - the movie wins, not the writer/composer)
             return "movie"
 
         # TV awards

@@ -83,8 +83,30 @@ class GroupTweetsFilter(BaseFilter):
 
     _win_pattern = re.compile(r"\bwin(s|ning|ner|ners)?|won\b", re.IGNORECASE)
     _host_pattern = re.compile(r"\bhost(s|ed|ing)?\b", re.IGNORECASE)
-    _presenter_pattern = re.compile(r"\bpresent(s|ed|ing|er|ers)?\b", re.IGNORECASE)
-    _nominee_pattern = re.compile(r"\bnominat(e|es|ed|ing|ion|ions)|nominee(s)?\b", re.IGNORECASE)
+    # Expanded presenter pattern: include various presentation contexts
+    _presenter_pattern = re.compile(
+        r"\bpresent(s|ed|ing|er|ers)?|"
+        r"\bintroduc(e|es|ed|ing)|"
+        r"\bannouncing\s+(the\s+)?(winner|award)|"
+        r"\bgiv(e|es|ing)\s+(out\s+)?(the\s+)?award|"
+        r"\bhanded\s+out|"
+        r"\bon\s+stage\s+to",
+        re.IGNORECASE,
+    )
+    # Expanded nominee pattern: include nomination keywords + prediction/comparison contexts
+    # Now safe to overlap with _win_pattern since tweets can be in multiple groups
+    _nominee_pattern = re.compile(
+        r"\bnominat(e|es|ed|ing|ion|ions)|nominee(s)?|"
+        r"\bcontender(s)?|"
+        r"\bshould\s+(win|have\s+won)|"
+        r"\bdeserves?\s+to\s+win|"
+        r"\bup\s+for\s+(best|the)|"
+        r"\bin\s+the\s+(running|race)|"
+        r"\bhoping\s+.+\s+wins?|"
+        r"\brooting\s+for|"
+        r"\bpredicting?\s+.+\s+(to\s+)?win",
+        re.IGNORECASE,
+    )
     _cecil_pattern = re.compile(r"\bcecil\s+b\.?\s+demille\s+award\b", re.IGNORECASE)
 
     # POS-based grammar for award extraction
@@ -145,21 +167,45 @@ class GroupTweetsFilter(BaseFilter):
         return awards
 
     def filter_tweet(self, tweet: Tweet) -> bool:
-        """Filter and group tweets, extracting award mentions for winner tweets."""
+        """Filter and group tweets, extracting award mentions for all relevant categories.
+
+        Note: Tweets can belong to multiple groups (e.g., both 'win' and 'nominee').
+        """
+        # Extract award mentions once for efficiency
+        award_mentions = self.extract_award_mentions(tweet.text)
+        matched = False
+
+        # Check all patterns - allow tweets to be in multiple groups
         if re.search(self._win_pattern, tweet.text):
             self.groups["win"].append(tweet)
-            # Extract award mentions using POS tagging for better matching
-            award_mentions = self.extract_award_mentions(tweet.text)
+            # Store award mentions for better association
             if award_mentions:
-                self.tweet_awards[tweet.id] = award_mentions
-            return True
-        elif re.search(self._host_pattern, tweet.text):
+                if tweet.id not in self.tweet_awards:
+                    self.tweet_awards[tweet.id] = []
+                self.tweet_awards[tweet.id].extend(award_mentions)
+
+            matched = True
+
+        if re.search(self._host_pattern, tweet.text):
             self.groups["host"].append(tweet)
-            return True
-        elif re.search(self._presenter_pattern, tweet.text):
+            matched = True
+
+        if re.search(self._presenter_pattern, tweet.text):
             self.groups["presenter"].append(tweet)
-            return True
-        elif re.search(self._nominee_pattern, tweet.text):
+            # Store award mentions for presenters too
+            if award_mentions:
+                if tweet.id not in self.tweet_awards:
+                    self.tweet_awards[tweet.id] = []
+                self.tweet_awards[tweet.id].extend(award_mentions)
+            matched = True
+
+        if re.search(self._nominee_pattern, tweet.text):
             self.groups["nominee"].append(tweet)
-            return True
-        return False
+            # Store award mentions for nominees too
+            if award_mentions:
+                if tweet.id not in self.tweet_awards:
+                    self.tweet_awards[tweet.id] = []
+                self.tweet_awards[tweet.id].extend(award_mentions)
+            matched = True
+
+        return matched

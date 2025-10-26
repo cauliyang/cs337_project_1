@@ -24,9 +24,14 @@ class NomineeExtractor(BaseExtractor):
         re.compile(r"\b(?:nominated|nominee)\s+(?:for\s+)?(?:the\s+)?", re.IGNORECASE),
         re.compile(r"\bnominees?\s+(?:are|include|:)\s*", re.IGNORECASE),
         re.compile(r"\b(?:is|are|was|were)\s+nominated\b", re.IGNORECASE),
+        re.compile(r"\bshould\s+(?:have\s+)?win\b", re.IGNORECASE),  # "should win", "should have won"
+        re.compile(r"\bdeserves?\s+(?:to\s+)?win\b", re.IGNORECASE),  # "deserves to win"
+        re.compile(r"\bup\s+(?:for|against)\b", re.IGNORECASE),  # "up for", "up against"
+        re.compile(r"\bcontender(?:s)?\b", re.IGNORECASE),  # "contender", "contenders"
+        re.compile(r"\bin\s+the\s+(?:running|race)\b", re.IGNORECASE),  # "in the running", "in the race"
     ]
 
-    def __init__(self, min_mentions: int = 3, top_n: int = 5):
+    def __init__(self, min_mentions: int = 1, top_n: int = 5):
         """
         Initialize nominee extractor.
 
@@ -43,11 +48,8 @@ class NomineeExtractor(BaseExtractor):
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions nominees."""
-        # TODO: use patterns instead of keywords
-
-        keywords = ["nominated", "nominee", "nominees", "nomination", "nominations"]
-        text_lower = text.lower()
-        return any(keyword in text_lower for keyword in keywords)
+        # Use regex patterns for more flexible matching
+        return any(pattern.search(text) for pattern in self.NOMINEE_PATTERNS)
 
     def extract_nominees_from_tweet(self, text: str, award_name: str = "") -> list[str]:
         """
@@ -197,8 +199,8 @@ class NomineeExtractor(BaseExtractor):
             if winner_normalized and normalize_text(nominee_name) == winner_normalized:
                 continue
 
-            # Validate entity type (basic validation)
-            # In production, you'd use more sophisticated validation
+            # For now, don't filter by entity type - just add all candidates
+            # TODO: improve entity type validation
             filtered_candidates.append((nominee_name, count))
 
         # Filter by minimum mentions
