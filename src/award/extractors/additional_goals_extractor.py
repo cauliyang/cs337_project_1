@@ -64,6 +64,7 @@ class AdditionalGoalsExtractor(BaseExtractor):
         super().__init__()
         self.min_mentions = min_mentions
         self.nlp = get_nlp()
+        self.goal_counters: dict[str, Counter] = {}  # Store Counters for candidate extraction
 
     def match_pattern(self, text: str) -> bool:
         """Check if text matches any additional goal patterns."""
@@ -97,6 +98,9 @@ class AdditionalGoalsExtractor(BaseExtractor):
                 persons = self.extract_persons_from_tweet(tweet.text)
                 person_counts.update(persons)
 
+        # Store Counter for candidate extraction
+        self.goal_counters["best_dressed"] = person_counts
+
         # Get top person
         if person_counts:
             most_common = person_counts.most_common(1)
@@ -113,6 +117,9 @@ class AdditionalGoalsExtractor(BaseExtractor):
             if self.match_patterns(tweet.text, self.WORST_DRESSED_PATTERNS):
                 persons = self.extract_persons_from_tweet(tweet.text)
                 person_counts.update(persons)
+
+        # Store Counter for candidate extraction
+        self.goal_counters["worst_dressed"] = person_counts
 
         # Get top person
         if person_counts:
@@ -132,6 +139,9 @@ class AdditionalGoalsExtractor(BaseExtractor):
                 persons = self.extract_persons_from_tweet(tweet.text)
                 person_counts.update(persons)
 
+        # Store Counter for candidate extraction
+        self.goal_counters["best_speech"] = person_counts
+
         # Get top person
         if person_counts:
             most_common = person_counts.most_common(1)
@@ -148,6 +158,9 @@ class AdditionalGoalsExtractor(BaseExtractor):
         for tweet in tweets:
             persons = self.extract_persons_from_tweet(tweet.text)
             person_counts.update(persons)
+
+        # Store Counter for candidate extraction
+        self.goal_counters["most_talked_about"] = person_counts
 
         # Get top person, excluding hosts (they're already known)
         if person_counts:

@@ -41,6 +41,7 @@ class WinnerExtractor(BaseExtractor):
         self.nlp = get_nlp()
         self.entity_validator = EntityTypeValidator()
         self.artist_validator = ArtistValidator() if use_imdb else None
+        self.award_winner_counters: dict[str, Counter] = {}  # Store Counters for candidate extraction
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions winners."""
@@ -109,7 +110,7 @@ class WinnerExtractor(BaseExtractor):
         award_tweets_map: dict[str, list[Tweet]] = defaultdict(list)
 
         for tweet in tweets:
-            text_normalized = normalize_text(tweet.text)
+            text_normalized = normalize_text(tweet.text)  # TODO: remove normalize_text
 
             # Find which award(s) this tweet mentions
             mentioned_awards = []
@@ -353,6 +354,12 @@ class WinnerExtractor(BaseExtractor):
 
         # Associate winners with awards using POS-detected mentions
         award_winner_candidates, award_tweets_map = self.associate_winners_with_awards(tweets, awards, tweet_awards)
+
+        # Store raw Counters before filtering (for candidate extraction)
+        # Convert from list of tuples back to Counter
+        self.award_winner_counters = {
+            award: Counter(dict(candidates)) for award, candidates in award_winner_candidates.items()
+        }
 
         # Filter out hosts from all candidates
         hosts_normalized = set([normalize_text(h) for h in (hosts or [])])

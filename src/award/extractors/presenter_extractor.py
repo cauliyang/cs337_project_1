@@ -1,5 +1,6 @@
 """Presenter extractor for identifying award presenters from tweets."""
 
+import re
 from collections import Counter, defaultdict
 
 from award.processors.base import BaseExtractor
@@ -18,14 +19,17 @@ class PresenterExtractor(BaseExtractor):
 
     # Presenter-related patterns
     PRESENTER_PATTERNS = [
-        r"\b(?:presented|presenting|presents?)\s+(?:by\s+)?",
-        r"\b(?:introduces?|introduced|introducing)\s+",
-        r"\bpresenter(?:s)?\s*(?::|\bis\b)",
-        r"\bwill\s+present\b",
-        r"\bhanded\s+out\s+the\s+award\b",
+        re.compile(r"\b(?:presented|presenting|presents?)\s+(?:by\s+)?", re.IGNORECASE),
+        re.compile(r"\b(?:introduces?|introduced|introducing)\s+", re.IGNORECASE),
+        re.compile(r"\bpresenter(?:s)?\s*(?::|is|are)\s*", re.IGNORECASE),
+        re.compile(r"\bwill\s+present\b", re.IGNORECASE),
+        re.compile(r"\bhanded\s+out\s+(?:the\s+)?award\b", re.IGNORECASE),
+        re.compile(r"\bgiving\s+(?:out\s+)?(?:the\s+)?award\b", re.IGNORECASE),  # "giving out the award"
+        re.compile(r"\bannouncing\s+(?:the\s+)?(?:winner|award)\b", re.IGNORECASE),  # "announcing the winner"
+        re.compile(r"\bon\s+stage\s+(?:to\s+)?(?:present|announce)\b", re.IGNORECASE),  # "on stage to present"
     ]
 
-    def __init__(self, min_mentions: int = 3, top_n: int = 2):
+    def __init__(self, min_mentions: int = 1, top_n: int = 2):
         """
         Initialize presenter extractor.
 
@@ -37,22 +41,12 @@ class PresenterExtractor(BaseExtractor):
         self.min_mentions = min_mentions
         self.top_n = top_n
         self.nlp = get_nlp()
+        self.award_presenter_counters: dict[str, Counter] = {}  # Store Counters for candidate extraction
 
     def match_pattern(self, text: str) -> bool:
         """Check if text mentions presenters."""
-        # TODO: use patterns instead of keywords
-        keywords = [
-            "present",
-            "presented",
-            "presenting",
-            "presenter",
-            "presenters",
-            "introduces",
-            "introduced",
-            "introducing",
-        ]
-        text_lower = text.lower()
-        return any(keyword in text_lower for keyword in keywords)
+        # Use regex patterns for more flexible matching
+        return any(pattern.search(text) for pattern in self.PRESENTER_PATTERNS)
 
     def extract_presenters_from_tweet(self, text: str) -> list[str]:
         """
@@ -217,6 +211,12 @@ class PresenterExtractor(BaseExtractor):
         award_presenter_candidates, award_tweets_map = self.associate_presenters_with_awards(
             tweets, awards, tweet_awards
         )
+
+        # Store raw Counters before filtering (for candidate extraction)
+        # Convert from list of tuples back to Counter
+        self.award_presenter_counters = {
+            award: Counter(dict(candidates)) for award, candidates in award_presenter_candidates.items()
+        }
 
         # Select top presenters for each award
         presenters = {}

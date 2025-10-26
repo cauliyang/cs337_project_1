@@ -70,7 +70,7 @@ def _load_results(year: str) -> dict:
             f"Results file gg{year}_results.json not found. Please run main() first to generate results."
         )
 
-    with open(results_file, "r", encoding="utf-8") as f:
+    with open(results_file, encoding="utf-8") as f:
         data = json.load(f)
 
     _RESULTS_CACHE[year] = data
@@ -92,7 +92,15 @@ def get_hosts(year):
         - The function should return a list even if there's only one host
     """
     data = _load_results(year)
-    return data["hosts"]
+    # New format: return top 2 hosts from host_candidates
+    host_candidates = data.get("host_candidates", [])
+    if len(host_candidates) >= 2:
+        return host_candidates[:2]  # Return top 2 candidates as hosts
+    elif len(host_candidates) == 1:
+        return host_candidates
+    elif data.get("host"):
+        return [data["host"]]
+    return []
 
 
 def get_awards(year):
@@ -147,7 +155,10 @@ def get_nominees(year):
         - Each value should be a list of strings, even if there's only one nominee
     """
     data = _load_results(year)
-    return {award: data["award_data"][award]["nominees"] for award in data["award_data"]}
+    # New flat format: awards are top-level keys
+    # Return all award keys (template awards), not just discovered awards from "awards" list
+    award_keys = [k for k in data.keys() if isinstance(data.get(k), dict)]
+    return {award: data.get(award, {}).get("nominees", []) for award in award_keys}
 
 
 def get_winner(year):
@@ -171,7 +182,10 @@ def get_winner(year):
         - Each value should be a single string (the winner's name)
     """
     data = _load_results(year)
-    return {award: data["award_data"][award]["winner"] for award in data["award_data"]}
+    # New flat format: awards are top-level keys
+    # Return all award keys (template awards), not just discovered awards from "awards" list
+    award_keys = [k for k in data.keys() if isinstance(data.get(k), dict)]
+    return {award: data.get(award, {}).get("winner", "") for award in award_keys}
 
 
 def get_presenters(year):
@@ -195,7 +209,10 @@ def get_presenters(year):
         - Each value should be a list of strings, even if there's only one presenter
     """
     data = _load_results(year)
-    return {award: data["award_data"][award]["presenters"] for award in data["award_data"]}
+    # New flat format: awards are top-level keys
+    # Return all award keys (template awards), not just discovered awards from "awards" list
+    award_keys = [k for k in data.keys() if isinstance(data.get(k), dict)]
+    return {award: data.get(award, {}).get("presenters", []) for award in award_keys}
 
 
 def pre_ceremony():

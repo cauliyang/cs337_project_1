@@ -38,6 +38,7 @@ class HostExtractor(BaseExtractor):
         self.min_mentions = min_mentions
         self.top_n = top_n
         self.nlp = get_nlp()
+        self.person_counts = Counter()  # Store Counter for candidate extraction
 
     def match_pattern(self, text: str) -> bool:
         """
@@ -77,11 +78,11 @@ class HostExtractor(BaseExtractor):
             person_mentions.extend(normalized_persons)
 
         # Step 3: Count mentions
-        person_counts = Counter(person_mentions)
-        print(f"Found {len(person_counts)} unique persons mentioned")
+        self.person_counts = Counter(person_mentions)  # Store for candidate extraction
+        print(f"Found {len(self.person_counts)} unique persons mentioned")
 
         # Step 4: Select top N hosts with sufficient mentions
-        hosts = self.select_top_n(person_counts, self.top_n, self.min_mentions)
+        hosts = self.select_top_n(self.person_counts, self.top_n, self.min_mentions)
 
         print(f"Selected hosts: {hosts}")
         return hosts
